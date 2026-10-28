@@ -18,6 +18,9 @@ public class VentanaModoPatron extends JFrame {
         }
     }
 
+    private JLabel lblTitulo;
+    private JLabel lblCasillasPatron;
+
     public VentanaModoPatron() {
         setTitle("Modo Patrones - Juegos de Memoria");
         setSize(640, 780);
@@ -30,6 +33,22 @@ public class VentanaModoPatron extends JFrame {
         gbc.insets = new Insets(8, 10, 8, 10);
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Título
+        lblTitulo = new JLabel("=== MODO PATRONES ===");
+        lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setFont(new Font("Monospaced", Font.BOLD, 18));
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+        gbc.gridy = 0;
+        panelFondo.add(lblTitulo, gbc);
+
+        // Cantidad de casillas del patrón actual (inicia en 3)
+        lblCasillasPatron = new JLabel("Casillas a recordar: 3");
+        lblCasillasPatron.setForeground(Color.WHITE);
+        lblCasillasPatron.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblCasillasPatron.setHorizontalAlignment(SwingConstants.CENTER);
+        gbc.gridy = 1;
+        panelFondo.add(lblCasillasPatron, gbc);
 
         setContentPane(panelFondo);
     }

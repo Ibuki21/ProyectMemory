@@ -75,6 +75,12 @@ public class VentanaMenuPrincipal extends JFrame {
             VentanaLogin loginDialog = new VentanaLogin(this);
             loginDialog.setVisible(true);
         });
+        
+        // --- Evento para abrir la ventana del Modo Patrones ---
+        btnPatron.addActionListener(e -> {
+            VentanaModoPatron ventanaPatron = new VentanaModoPatron();
+            ventanaPatron.setVisible(true);
+        });
     }
 
     public JButton getBtnLogin() {

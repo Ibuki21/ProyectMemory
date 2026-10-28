@@ -20,6 +20,8 @@ public class VentanaModoPatron extends JFrame {
 
     private JLabel lblTitulo;
     private JLabel lblCasillasPatron;
+    private JProgressBar barraTiempoTotal;
+    private JProgressBar barraTiempoEntreCasillas;
 
     public VentanaModoPatron() {
         setTitle("Modo Patrones - Juegos de Memoria");
@@ -49,6 +51,24 @@ public class VentanaModoPatron extends JFrame {
         lblCasillasPatron.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridy = 1;
         panelFondo.add(lblCasillasPatron, gbc);
+
+        // Barra de tiempo total para replicar el patrón (12 segundos)
+        barraTiempoTotal = new JProgressBar(0, 12);
+        barraTiempoTotal.setValue(12);
+        barraTiempoTotal.setStringPainted(true);
+        barraTiempoTotal.setString("Tiempo total: 12 s");
+        barraTiempoTotal.setFont(new Font("SansSerif", Font.BOLD, 12));
+        gbc.gridy = 2;
+        panelFondo.add(barraTiempoTotal, gbc);
+
+        // Barra de tiempo entre casillas (2 segundos)
+        barraTiempoEntreCasillas = new JProgressBar(0, 2);
+        barraTiempoEntreCasillas.setValue(2);
+        barraTiempoEntreCasillas.setStringPainted(true);
+        barraTiempoEntreCasillas.setString("Tiempo entre casillas: 2 s");
+        barraTiempoEntreCasillas.setFont(new Font("SansSerif", Font.BOLD, 12));
+        gbc.gridy = 3;
+        panelFondo.add(barraTiempoEntreCasillas, gbc);
 
         setContentPane(panelFondo);
     }

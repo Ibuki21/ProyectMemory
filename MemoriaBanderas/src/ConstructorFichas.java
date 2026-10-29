@@ -5,8 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
 
-//Construye las fichas (casillas) del Modo Patrones.
-
+// Construye las fichas (casillas) del Modo Patrones.
 public class ConstructorFichas {
 
     private static final String RUTA_BANDERAS = "Recursos/w320/";
@@ -26,10 +25,8 @@ public class ConstructorFichas {
             "pt", "gb", "jp", "kr", "cn", "ca",
             "au", "nz", "za", "eg", "ma", "ng"
     };
-    
 
-    //Crea una matriz de botones con una bandera en cada casilla.
-
+    // Crea una matriz de botones con una bandera en cada casilla.
     public static JButton[][] crearMatrizFichas(int filas, int columnas) {
         JButton[][] fichas = new JButton[filas][columnas];
         int indice = 0;
@@ -50,8 +47,7 @@ public class ConstructorFichas {
         if (icono != null) {
             ficha.setIcon(icono);
         } else {
-            // Texto alternativo por si alguna bandera fallara en cargar
-            ficha.setText(codigoBandera.toUpperCase());
+            ficha.setText(codigoBandera.toUpperCase()); // Texto de respaldo por si falla
         }
         ficha.setMargin(new Insets(0, 0, 0, 0));
         ficha.setPreferredSize(new Dimension(ANCHO_FICHA, ALTO_FICHA));
@@ -59,7 +55,7 @@ public class ConstructorFichas {
         return ficha;
     }
 
-    //Carga una bandera desde los recursos usando InputStream y la escala
+    // Carga una bandera desde los recursos internos usando InputStream
     private static ImageIcon cargarBandera(String codigo, int ancho, int alto) {
         String rutaCompleta = RUTA_BANDERAS + codigo + ".png";
         try (InputStream is = ConstructorFichas.class.getClassLoader().getResourceAsStream(rutaCompleta)) {

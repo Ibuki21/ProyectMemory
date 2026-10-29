@@ -1,20 +1,33 @@
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 
 public class VentanaModoPatron extends JFrame {
 
-    // Panel con imagen de fondo (misma estructura que en VentanaMenuPrincipal)
+    // 🖼️ Panel con imagen de fondo corregido para carga segura
     static class PanelFondo extends JPanel {
         private Image imagenFondo;
 
         public PanelFondo(String ruta) {
-            imagenFondo = new ImageIcon(ruta).getImage();
+            URL urlImagen = getClass().getClassLoader().getResource(ruta);
+            if (urlImagen != null) {
+                imagenFondo = new ImageIcon(urlImagen).getImage();
+            } else {
+                URL urlAlternativa = getClass().getResource("/" + ruta);
+                if (urlAlternativa != null) {
+                    imagenFondo = new ImageIcon(urlAlternativa).getImage();
+                } else {
+                    System.err.println("No se pudo cargar la imagen de fondo: " + ruta);
+                }
+            }
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            g.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), this);
+            if (imagenFondo != null) {
+                g.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), this);
+            }
         }
     }
 
@@ -74,17 +87,14 @@ public class VentanaModoPatron extends JFrame {
         gbc.gridy = 3;
         panelFondo.add(barraTiempoEntreCasillas, gbc);
 
-        // Matriz de casillas 6x6
+        // Matriz de casillas 6x6 (las fichas las construye ConstructorFichas)
         JPanel panelTablero = new JPanel(new GridLayout(FILAS, COLUMNAS, 6, 6));
         panelTablero.setOpaque(false);
-        botonesCasillas = new JButton[FILAS][COLUMNAS];
+        botonesCasillas = ConstructorFichas.crearMatrizFichas(FILAS, COLUMNAS);
 
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
-                JButton ficha = new JButton();
-                ficha.setPreferredSize(new Dimension(80, 56));
-                botonesCasillas[i][j] = ficha;
-                panelTablero.add(ficha);
+                panelTablero.add(botonesCasillas[i][j]);
             }
         }
 

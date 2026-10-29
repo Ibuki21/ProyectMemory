@@ -3,7 +3,7 @@ import java.awt.*;
 
 public class VentanaModoPatron extends JFrame {
 
-    // Panel con imagen de fondo (misma estructura que en VentanaMenuPrincipal)
+    // Panel con imagen de fondo
     static class PanelFondo extends JPanel {
         private Image imagenFondo;
 
@@ -74,17 +74,14 @@ public class VentanaModoPatron extends JFrame {
         gbc.gridy = 3;
         panelFondo.add(barraTiempoEntreCasillas, gbc);
 
-        // Matriz de casillas 6x6
+        // Matriz de casillas 6x6 (las fichas las construye ConstructorFichas)
         JPanel panelTablero = new JPanel(new GridLayout(FILAS, COLUMNAS, 6, 6));
         panelTablero.setOpaque(false);
-        botonesCasillas = new JButton[FILAS][COLUMNAS];
+        botonesCasillas = ConstructorFichas.crearMatrizFichas(FILAS, COLUMNAS);
 
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
-                JButton ficha = new JButton();
-                ficha.setPreferredSize(new Dimension(80, 56));
-                botonesCasillas[i][j] = ficha;
-                panelTablero.add(ficha);
+                panelTablero.add(botonesCasillas[i][j]);
             }
         }
 

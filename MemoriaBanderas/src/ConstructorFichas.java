@@ -1,15 +1,15 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import javax.imageio.ImageIO;
 
 //Construye las fichas (casillas) del Modo Patrones.
 
 public class ConstructorFichas {
 
-    private static final String RUTA_BANDERAS = "Recursos/w320/";
+    private static final String CARPETA_BANDERAS = "Recursos/w320/";
 
     // Tamaño de la casilla y de la bandera (proporción 3:2, ajustada a la casilla)
     private static final int ANCHO_FICHA = 80;
@@ -26,19 +26,16 @@ public class ConstructorFichas {
             "pt", "gb", "jp", "kr", "cn", "ca",
             "au", "nz", "za", "eg", "ma", "ng"
     };
-    
 
-    //Crea una matriz de botones con una bandera en cada casilla.
+   //Crea una matriz de botones con una bandera en cada casilla.
 
     public static JButton[][] crearMatrizFichas(int filas, int columnas) {
         JButton[][] fichas = new JButton[filas][columnas];
         int indice = 0;
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
-                if (indice < BANDERAS.length) {
-                    fichas[i][j] = crearFicha(BANDERAS[indice]);
-                    indice++;
-                }
+                fichas[i][j] = crearFicha(BANDERAS[indice]);
+                indice++;
             }
         }
         return fichas;
@@ -46,31 +43,21 @@ public class ConstructorFichas {
 
     private static JButton crearFicha(String codigoBandera) {
         JButton ficha = new JButton();
-        ImageIcon icono = cargarBandera(codigoBandera, ANCHO_BANDERA, ALTO_BANDERA);
-        if (icono != null) {
-            ficha.setIcon(icono);
-        } else {
-            // Texto alternativo por si alguna bandera fallara en cargar
-            ficha.setText(codigoBandera.toUpperCase());
-        }
+        ficha.setIcon(cargarBandera(codigoBandera, ANCHO_BANDERA, ALTO_BANDERA));
         ficha.setMargin(new Insets(0, 0, 0, 0));
         ficha.setPreferredSize(new Dimension(ANCHO_FICHA, ALTO_FICHA));
         ficha.setFocusPainted(false);
         return ficha;
     }
 
-    //Carga una bandera desde los recursos usando InputStream y la escala
+    //Carga una bandera desde la carpeta de recursos y la escala
+    //al tamaño exacto indicado. Si no se encuentra, imprime la ruta
+    //buscada en la consola y devuelve null.
+    
     private static ImageIcon cargarBandera(String codigo, int ancho, int alto) {
-        String rutaCompleta = RUTA_BANDERAS + codigo + ".png";
-        try (InputStream is = ConstructorFichas.class.getClassLoader().getResourceAsStream(rutaCompleta)) {
-            if (is == null) {
-                System.err.println("No se encontró el archivo de bandera en los recursos: " + rutaCompleta);
-                return null;
-            }
-            BufferedImage original = ImageIO.read(is);
-            if (original == null) {
-                return null;
-            }
+        File archivo = new File(CARPETA_BANDERAS + codigo + ".png");
+        try {
+            BufferedImage original = ImageIO.read(archivo);
             BufferedImage escalada = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2 = escalada.createGraphics();
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
@@ -78,7 +65,7 @@ public class ConstructorFichas {
             g2.dispose();
             return new ImageIcon(escalada);
         } catch (IOException | IllegalArgumentException e) {
-            System.err.println("No se pudo procesar la bandera: " + rutaCompleta);
+            System.err.println("No se pudo cargar la bandera: " + archivo.getAbsolutePath());
             return null;
         }
     }

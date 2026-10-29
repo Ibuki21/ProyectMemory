@@ -4,7 +4,11 @@ import java.net.URL;
 
 public class VentanaModoPatron extends JFrame {
 
+<<<<<<< HEAD
     // 🖼️ Panel con imagen de fondo corregido para carga segura
+=======
+    // Panel con imagen de fondo
+>>>>>>> origin/main
     static class PanelFondo extends JPanel {
         private Image imagenFondo;
 

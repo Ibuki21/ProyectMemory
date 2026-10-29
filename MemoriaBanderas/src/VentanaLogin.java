@@ -1,9 +1,37 @@
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VentanaLogin extends JDialog {
+
+    // Panel con imagen de fondo seguro para recursos
+    static class PanelFondo extends JPanel {
+        private Image imagenFondo;
+
+        public PanelFondo(String ruta) {
+            URL urlImagen = getClass().getClassLoader().getResource(ruta);
+            if (urlImagen != null) {
+                imagenFondo = new ImageIcon(urlImagen).getImage();
+            } else {
+                URL urlAlternativa = getClass().getResource("/" + ruta);
+                if (urlAlternativa != null) {
+                    imagenFondo = new ImageIcon(urlAlternativa).getImage();
+                } else {
+                    System.err.println("No se pudo cargar la imagen de fondo: " + ruta);
+                }
+            }
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (imagenFondo != null) {
+                g.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), this);
+            }
+        }
+    }
 
     private JTextField txtCorreo;
     private JPasswordField txtPassword;
@@ -14,12 +42,13 @@ public class VentanaLogin extends JDialog {
 
     public VentanaLogin(Frame parent) {
         super(parent, "Iniciar Sesión", true);
-        setSize(380, 260);
+        setSize(430, 310);
         setLocationRelativeTo(parent);
         setResizable(false);
 
-        // Panel principal con margen interno
-        JPanel panel = new JPanel(new GridBagLayout());
+        // Panel principal con imagen de fondo y margen interno
+        PanelFondo panel = new PanelFondo("Recursos/Fondo1.jpg");
+        panel.setLayout(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
@@ -63,6 +92,7 @@ public class VentanaLogin extends JDialog {
 
         // Panel de botones (Aceptar / Cancelar)
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelBotones.setOpaque(false); // Para que se vea el fondo detrás de los botones
         btnIniciarSesion = new JButton("Ingresar");
         btnCancelar = new JButton("Cancelar");
         panelBotones.add(btnIniciarSesion);

@@ -114,6 +114,10 @@ public class VentanaMenuPrincipal extends JFrame {
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
             ventanaPatron.setVisible(true);
         });
+        btnBandera.addActionListener(e -> {
+            JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
+            ventanaParejas.setVisible(true);
+        });
 
         // --- 🎵 Evento para Encender / Apagar la Música (Independiente y ordenado) ---
         btnMusica.addActionListener(e -> {

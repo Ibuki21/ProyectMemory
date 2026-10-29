@@ -18,10 +18,14 @@ public class VentanaModoPatron extends JFrame {
         }
     }
 
+    private static final int FILAS = 6;
+    private static final int COLUMNAS = 6;
+
     private JLabel lblTitulo;
     private JLabel lblCasillasPatron;
     private JProgressBar barraTiempoTotal;
     private JProgressBar barraTiempoEntreCasillas;
+    private JButton[][] botonesCasillas;
 
     public VentanaModoPatron() {
         setTitle("Modo Patrones - Juegos de Memoria");
@@ -69,6 +73,24 @@ public class VentanaModoPatron extends JFrame {
         barraTiempoEntreCasillas.setFont(new Font("SansSerif", Font.BOLD, 12));
         gbc.gridy = 3;
         panelFondo.add(barraTiempoEntreCasillas, gbc);
+
+        // Matriz de casillas 6x6
+        JPanel panelTablero = new JPanel(new GridLayout(FILAS, COLUMNAS, 6, 6));
+        panelTablero.setOpaque(false);
+        botonesCasillas = new JButton[FILAS][COLUMNAS];
+
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                JButton ficha = new JButton();
+                ficha.setPreferredSize(new Dimension(80, 56));
+                botonesCasillas[i][j] = ficha;
+                panelTablero.add(ficha);
+            }
+        }
+
+        gbc.gridy = 4;
+        gbc.fill = GridBagConstraints.NONE;
+        panelFondo.add(panelTablero, gbc);
 
         setContentPane(panelFondo);
     }

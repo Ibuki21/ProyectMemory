@@ -4,7 +4,7 @@ import java.net.URL;
 
 public class VentanaModoPatron extends JFrame {
 
-    // 🖼️ Panel con imagen de fondo corregido para carga segura
+    // Panel con imagen de fondo corregido para carga segura
     static class PanelFondo extends JPanel {
         private Image imagenFondo;
 
@@ -69,18 +69,18 @@ public class VentanaModoPatron extends JFrame {
         gbc.gridy = 1;
         panelFondo.add(lblCasillasPatron, gbc);
 
-        // Barra de tiempo total para replicar el patrón (12 segundos)
-        barraTiempoTotal = new JProgressBar(0, 12);
-        barraTiempoTotal.setValue(12);
+        // Barra de tiempo total para replicar el patrón (12 segundos = 120 décimas)
+        barraTiempoTotal = new JProgressBar(0, 120);
+        barraTiempoTotal.setValue(120);
         barraTiempoTotal.setStringPainted(true);
         barraTiempoTotal.setString("Tiempo total: 12 s");
         barraTiempoTotal.setFont(new Font("SansSerif", Font.BOLD, 12));
         gbc.gridy = 2;
         panelFondo.add(barraTiempoTotal, gbc);
 
-        // Barra de tiempo entre casillas (2 segundos)
-        barraTiempoEntreCasillas = new JProgressBar(0, 2);
-        barraTiempoEntreCasillas.setValue(2);
+        // Barra de tiempo entre casillas (2 segundos = 20 décimas)
+        barraTiempoEntreCasillas = new JProgressBar(0, 20);
+        barraTiempoEntreCasillas.setValue(20);
         barraTiempoEntreCasillas.setStringPainted(true);
         barraTiempoEntreCasillas.setString("Tiempo entre casillas: 2 s");
         barraTiempoEntreCasillas.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -103,5 +103,42 @@ public class VentanaModoPatron extends JFrame {
         panelFondo.add(panelTablero, gbc);
 
         setContentPane(panelFondo);
+    }
+
+    // Resalta una casilla (la usa el controlador al mostrar el patrón y al hacer clic)
+    public void resaltarCasilla(int fila, int columna) {
+        botonesCasillas[fila][columna].setBackground(Color.YELLOW);
+        botonesCasillas[fila][columna].setBorder(BorderFactory.createLineBorder(Color.YELLOW, 4));
+    }
+
+    // Devuelve una casilla a su aspecto normal
+    public void quitarResaltado(int fila, int columna) {
+        botonesCasillas[fila][columna].setBackground(UIManager.getColor("Button.background"));
+        botonesCasillas[fila][columna].setBorder(UIManager.getBorder("Button.border"));
+    }
+
+    // Devuelve todas las casillas a su aspecto normal
+    public void quitarTodosLosResaltados() {
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                quitarResaltado(i, j);
+            }
+        }
+    }
+
+    public JLabel getLblCasillasPatron() {
+        return lblCasillasPatron;
+    }
+
+    public JProgressBar getBarraTiempoTotal() {
+        return barraTiempoTotal;
+    }
+
+    public JProgressBar getBarraTiempoEntreCasillas() {
+        return barraTiempoEntreCasillas;
+    }
+
+    public JButton[][] getBotonesCasillas() {
+        return botonesCasillas;
     }
 }

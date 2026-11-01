@@ -110,9 +110,12 @@ public class VentanaMenuPrincipal extends JFrame {
         });
 
         // --- Evento para abrir la ventana del Modo Patrones ---
+        // --- Evento para abrir la ventana del Modo Patrones ---
         btnPatron.addActionListener(e -> {
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
+            ControladorModoPatron controlador = new ControladorModoPatron(ventanaPatron);
             ventanaPatron.setVisible(true);
+            controlador.iniciar();
         });
         btnBandera.addActionListener(e -> {
             JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
@@ -137,12 +140,15 @@ public class VentanaMenuPrincipal extends JFrame {
     public JButton getBtnLogin() {
         return btnLogin;
     }
+
     public JButton getBtnBandera() {
         return btnBandera;
     }
+
     public JButton getBtnPatron() {
         return btnPatron;
     }
+
     public JButton getBtnMusica() {
         return btnMusica;
     }

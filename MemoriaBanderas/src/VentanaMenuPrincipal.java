@@ -78,13 +78,15 @@ public class VentanaMenuPrincipal extends JFrame {
         panelFondo.add(lblTitulo, gbc);
 
         // Botones
-        btnLogin = new JButton("🔐 Iniciar Sesión (Login)");
+        btnLogin = new JButton("🔐 Iniciar Sesión/Registro");
+        JButton btnRegistrar = new JButton("📝 Registrarse");
         btnBandera = new JButton("🚩 Encuentra la Bandera");
         btnPatron = new JButton("🧩 Siguiendo el Patrón");
         btnMusica = new JButton("🎵 Música: Activada");
 
         Font fuenteBotones = new Font("SansSerif", Font.BOLD, 14);
         btnLogin.setFont(fuenteBotones);
+        btnRegistrar.setFont(fuenteBotones);
         btnBandera.setFont(fuenteBotones);
         btnPatron.setFont(fuenteBotones);
         btnMusica.setFont(fuenteBotones);
@@ -107,6 +109,11 @@ public class VentanaMenuPrincipal extends JFrame {
         btnLogin.addActionListener(e -> {
             VentanaLogin loginDialog = new VentanaLogin(this);
             loginDialog.setVisible(true);
+        });
+        //--Evento para abrir la ventana de registro---
+        btnRegistrar.addActionListener(e -> {
+            VentanaRegistro ventanaRegistro = new VentanaRegistro(this);
+            ventanaRegistro.setVisible(true);
         });
 
         // --- Evento para abrir la ventana del Modo Patrones ---
@@ -152,4 +159,5 @@ public class VentanaMenuPrincipal extends JFrame {
     public JButton getBtnMusica() {
         return btnMusica;
     }
+
 }

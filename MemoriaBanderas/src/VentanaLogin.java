@@ -6,7 +6,6 @@ import java.util.regex.Pattern;
 
 public class VentanaLogin extends JDialog {
 
-    // Panel con imagen de fondo seguro para recursos
     static class PanelFondo extends JPanel {
         private Image imagenFondo;
 
@@ -33,20 +32,20 @@ public class VentanaLogin extends JDialog {
         }
     }
 
-    private JTextField txtCorreo;
+    private JTextField txtIdentificador; // Correo o Usuario
     private JPasswordField txtPassword;
     private JButton btnVerPassword;
     private JButton btnIniciarSesion;
+    private JButton btnRegistrarse;
     private JButton btnCancelar;
     private boolean passwordVisible = false;
 
     public VentanaLogin(Frame parent) {
         super(parent, "Iniciar Sesión", true);
-        setSize(430, 310);
+        setSize(430, 330);
         setLocationRelativeTo(parent);
         setResizable(false);
 
-        // Panel principal con imagen de fondo y margen interno
         PanelFondo panel = new PanelFondo("Recursos/Fondo1.jpg");
         panel.setLayout(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -54,102 +53,91 @@ public class VentanaLogin extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Etiqueta Título
         JLabel lblTitulo = new JLabel("ACCESO AL SISTEMA");
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 3;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 3;
         panel.add(lblTitulo, gbc);
 
-        // Campo de Correo Electrónico
         gbc.gridwidth = 1;
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Correo:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 1;
+        panel.add(new JLabel("Usuario / Correo:"), gbc);
 
-        txtCorreo = new JTextField(18);
-        gbc.gridx = 1;
-        gbc.gridwidth = 2;
-        panel.add(txtCorreo, gbc);
+        txtIdentificador = new JTextField(18);
+        gbc.gridx = 1; gbc.gridwidth = 2;
+        panel.add(txtIdentificador, gbc);
 
-        // Campo de Contraseña
         gbc.gridwidth = 1;
-        gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridx = 0; gbc.gridy = 2;
         panel.add(new JLabel("Contraseña:"), gbc);
 
         txtPassword = new JPasswordField(14);
         gbc.gridx = 1;
         panel.add(txtPassword, gbc);
 
-        // Botón para mostrar / ocultar contraseña
         btnVerPassword = new JButton("👁");
         btnVerPassword.setToolTipText("Mostrar/Ocultar contraseña");
         gbc.gridx = 2;
         panel.add(btnVerPassword, gbc);
 
-        // Panel de botones (Aceptar / Cancelar)
-        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelBotones.setOpaque(false); // Para que se vea el fondo detrás de los botones
+        // Botones de acción
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        panelBotones.setOpaque(false);
         btnIniciarSesion = new JButton("Ingresar");
+        btnRegistrarse = new JButton("Registrarse");
         btnCancelar = new JButton("Cancelar");
+
         panelBotones.add(btnIniciarSesion);
+        panelBotones.add(btnRegistrarse);
         panelBotones.add(btnCancelar);
 
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 3;
+        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 3;
         panel.add(panelBotones, gbc);
 
         add(panel);
 
-        // Lógica para alternar visibilidad de la contraseña
         btnVerPassword.addActionListener(e -> alternarVisibilidadPassword());
-
-        // Evento de inicio de sesión
         btnIniciarSesion.addActionListener(e -> ejecutarLogin());
-
-        // Evento cancelar
+        btnRegistrarse.addActionListener(e -> abrirRegistro());
         btnCancelar.addActionListener(e -> dispose());
     }
 
     private void alternarVisibilidadPassword() {
         if (passwordVisible) {
-            // Ocultar caracteres
             txtPassword.setEchoChar('•');
             passwordVisible = false;
         } else {
-            // Mostrar texto plano
             txtPassword.setEchoChar((char) 0);
             passwordVisible = true;
         }
     }
 
-    private boolean esCorreoValido(String correo) {
-        String regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-zA-Z]{2,}$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(correo);
-        return matcher.matches();
+    private void abrirRegistro() {
+        VentanaRegistro registro = new VentanaRegistro(this);
+        registro.setVisible(true);
     }
 
     private void ejecutarLogin() {
-        String correo = txtCorreo.getText().trim();
+        String id = txtIdentificador.getText().trim();
         String password = new String(txtPassword.getPassword());
 
-        if (correo.isEmpty() || password.isEmpty()) {
+        if (id.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Por favor complete todos los campos.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        if (!esCorreoValido(correo)) {
-            JOptionPane.showMessageDialog(this, "El correo electrónico no tiene un formato válido.", "Correo Inválido", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        // Validación de existencia y credenciales
+        Usuario usuarioLogueado = GestorUsuarios.validarCredenciales(id, password);
 
-        // Aquí se agrega la verificación con base de datos o lógica del sistema
-        JOptionPane.showMessageDialog(this, "¡Inicio de sesión exitoso!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-        dispose();
+        if (usuarioLogueado != null) {
+            JOptionPane.showMessageDialog(this, "¡Bienvenido/a, " + usuarioLogueado.getNombre() + "!", "Inicio de Sesión Exitoso", JOptionPane.INFORMATION_MESSAGE);
+            dispose();
+        } else {
+            if (GestorUsuarios.existeUsuario(id)) {
+                JOptionPane.showMessageDialog(this, "Contraseña incorrecta.", "Error de Autenticación", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "El usuario o correo no está registrado. Por favor regístrese primero.", "Usuario No Encontrado", JOptionPane.WARNING_MESSAGE);
+            }
+        }
     }
 }

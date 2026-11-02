@@ -1,155 +1,241 @@
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 
 public class VentanaMenuPrincipal extends JFrame {
 
-    static class PanelFondo extends JPanel {
-        private Image imagenFondo;
+    private static final int ANCHO_VENTANA = 800;
+    private static final int ALTO_VENTANA = 600;
 
-        public PanelFondo(String ruta) {
-            URL urlImagen = getClass().getClassLoader().getResource(ruta);
-            if (urlImagen != null) {
-                imagenFondo = new ImageIcon(urlImagen).getImage();
-            } else {
-                URL urlAlternativa = getClass().getResource("/" + ruta);
-                if (urlAlternativa != null) {
-                    imagenFondo = new ImageIcon(urlAlternativa).getImage();
-                } else {
-                    System.err.println("No se pudo cargar la imagen de fondo: " + ruta);
-                }
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (imagenFondo != null) {
-                g.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), this);
-            }
-        }
-    }
+    private JPanel panelContenedor;
+    private Timer timerTransicion;
+    private Clip clipMusicaFondo;
+    private boolean musicaActiva = true;
 
     private JButton btnLogin;
     private JButton btnBandera;
     private JButton btnPatron;
     private JButton btnMusica;
 
-    // 🎵 Atributos para controlar el estado de la música
-    private Cancion musicaFondo;
-    private boolean musicaActiva = true;
-
     public VentanaMenuPrincipal() {
-        setTitle("Menú Principal - Juegos de Memoria");
-        setSize(1024, 576);
+        setTitle("Menú Principal - Juegos de Memoria y Banderas");
+        setSize(ANCHO_VENTANA, ALTO_VENTANA);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        setResizable(false);
 
-        // Inicializar y arrancar la música de fondo al abrir el menú
-        musicaFondo = new Cancion();
-        musicaFondo.cargarSonido("Recursos/Cancion/8 bits.wav");
-        musicaFondo.reproducir();
+        // 🎵 Iniciar música de fondo al abrir
+        reproducirMusicaFondo("Recursos/Cancion/8 bits.wav");
 
-        PanelFondo panelFondo = new PanelFondo("Recursos/Fondo.png");
-        panelFondo.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // Panel principal con CardLayout para cambiar entre la Intro y el Menú Interactivo
+        panelContenedor = new JPanel(new CardLayout());
+        setContentPane(panelContenedor);
 
-        // 🖼️ Carga del Logo
-        JLabel lblImagen = new JLabel();
-        URL urlLogo = getClass().getClassLoader().getResource("Recursos/LogoMenu.png");
-        if (urlLogo != null) {
-            ImageIcon iconoOriginal = new ImageIcon(urlLogo);
-            Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
-            lblImagen.setIcon(new ImageIcon(imagenEscalada));
+        // 1. Panel de Introducción (Muestra el GIF de presentación "VideoJuego.gif")
+        JPanel panelIntro = crearPanelConGifEscalado("Recursos/VideoJuego.gif", ANCHO_VENTANA, ANCHO_VENTANA);
+        panelContenedor.add(panelIntro, "INTRO");
+
+        // 2. Panel del Menú Interactivo (Fondo.gif con los botones flotantes)
+        JPanel panelMenu = crearPanelMenuConBotones();
+        panelContenedor.add(panelMenu, "MENU");
+
+        // Mostrar la intro primero
+        CardLayout cl = (CardLayout) panelContenedor.getLayout();
+        cl.show(panelContenedor, "INTRO");
+
+        // ⏱️ Duración de la intro en milisegundos (ej. 28000 ms = 28 segundos, ajústalo si dura más o menos)
+        int duracionIntroMillis = 28000;
+
+        timerTransicion = new Timer(duracionIntroMillis, e -> {
+            cl.show(panelContenedor, "MENU");
+            timerTransicion.stop();
+        });
+        timerTransicion.setRepeats(false);
+        timerTransicion.start();
+
+        // Detener la música al cerrar la ventana
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                detenerMusicaFondo();
+            }
+        });
+    }
+
+    // Panel que muestra el GIF de introducción escalado
+    private JPanel crearPanelConGifEscalado(String ruta, int ancho, int alto) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.BLACK);
+
+        JLabel lblGif = new JLabel();
+        lblGif.setHorizontalAlignment(SwingConstants.CENTER);
+
+        URL urlGif = getClass().getClassLoader().getResource(ruta);
+        if (urlGif != null) {
+            ImageIcon iconoOriginal = new ImageIcon(urlGif);
+            Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(ancho, alto, Image.SCALE_DEFAULT);
+            lblGif.setIcon(new ImageIcon(imagenEscalada));
+        } else {
+            lblGif.setText("No se encontró el recurso: " + ruta);
+            lblGif.setForeground(Color.WHITE);
         }
-        lblImagen.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridy = 0;
-        panelFondo.add(lblImagen, gbc);
 
-        // Título
-        JLabel lblTitulo = new JLabel("=== MENÚ PRINCIPAL ===");
-        lblTitulo.setForeground(Color.WHITE);
-        lblTitulo.setFont(new Font("Monospaced", Font.BOLD, 18));
-        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridy = 1;
-        panelFondo.add(lblTitulo, gbc);
+        panel.add(lblGif, BorderLayout.CENTER);
+        return panel;
+    }
 
-        // Botones
-        btnLogin = new JButton("🔐 Iniciar Sesión (Login)");
-        btnBandera = new JButton("🚩 Encuentra la Bandera");
-        btnPatron = new JButton("🧩 Siguiendo el Patrón");
-        btnMusica = new JButton("🎵 Música: Activada");
+    // Panel con capas para superponer los botones sobre el "Fondo.gif"
+    private JPanel crearPanelMenuConBotones() {
+        JPanel panelContenedorCapas = new JPanel(null);
+        panelContenedorCapas.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
 
-        Font fuenteBotones = new Font("SansSerif", Font.BOLD, 14);
-        btnLogin.setFont(fuenteBotones);
-        btnBandera.setFont(fuenteBotones);
-        btnPatron.setFont(fuenteBotones);
-        btnMusica.setFont(fuenteBotones);
+        // Capa inferior: El GIF de fondo en bucle
+        JLabel lblGif = new JLabel();
+        lblGif.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
+        URL urlGif = getClass().getClassLoader().getResource("Recursos/Fondo.gif");
+        if (urlGif != null) {
+            ImageIcon iconoOriginal = new ImageIcon(urlGif);
+            Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(ANCHO_VENTANA, ALTO_VENTANA, Image.SCALE_DEFAULT);
+            lblGif.setIcon(new ImageIcon(imagenEscalada));
+        } else {
+            System.err.println("No se pudo cargar el GIF de fondo: Recursos/Fondo.gif");
+        }
 
-        gbc.gridy = 2;
-        panelFondo.add(btnLogin, gbc);
+        // Capa superior transparente para los botones flotantes
+        JPanel panelBotonesFlotantes = new JPanel(null);
+        panelBotonesFlotantes.setOpaque(false);
+        panelBotonesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
 
-        gbc.gridy = 3;
-        panelFondo.add(btnBandera, gbc);
-
-        gbc.gridy = 4;
-        panelFondo.add(btnPatron, gbc);
-
-        gbc.gridy = 5;
-        panelFondo.add(btnMusica, gbc);
-
-        setContentPane(panelFondo);
-
-        // --- Evento para abrir la ventana de Login ---
+        // 📌 Botón 1: Iniciar Sesión / Registro
+        btnLogin = crearBotonConImagen("Recursos/Registro.png");
+        btnLogin.setBounds(300, 310, 200, 40);
         btnLogin.addActionListener(e -> {
+            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaLogin loginDialog = new VentanaLogin(this);
             loginDialog.setVisible(true);
         });
 
-        // --- Evento para abrir la ventana del Modo Patrones ---
-        // --- Evento para abrir la ventana del Modo Patrones ---
+        // 📌 Botón 2: Encuentra la Pareja / Banderas
+        btnBandera = crearBotonConImagen("Recursos/Memoria.png");
+        btnBandera.setBounds(300, 365, 200, 40);
+        btnBandera.addActionListener(e -> {
+            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
+            ventanaParejas.setVisible(true);
+        });
+
+        // 📌 Botón 3: Siguiendo el Patrón
+        btnPatron = crearBotonConImagen("Recursos/Patron.png");
+        btnPatron.setBounds(300, 420, 200, 40);
         btnPatron.addActionListener(e -> {
+            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
             ControladorModoPatron controlador = new ControladorModoPatron(ventanaPatron);
             ventanaPatron.setVisible(true);
             controlador.iniciar();
         });
-        btnBandera.addActionListener(e -> {
-            JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
-            ventanaParejas.setVisible(true);
-        });
 
-        // --- 🎵 Evento para Encender / Apagar la Música (Independiente y ordenado) ---
+        // 📌 Botón 4: Control de Música / Silenciar
+        btnMusica = crearBotonConImagen("Recursos/Musica.png");
+        btnMusica.setBounds(300, 485, 200, 40);
         btnMusica.addActionListener(e -> {
-            if (musicaActiva) {
-                musicaFondo.detener();
-                btnMusica.setText("🔇 Música: Silenciada");
-                musicaActiva = false;
-            } else {
-                musicaFondo.reproducir();
-                btnMusica.setText("🎵 Música: Activada");
-                musicaActiva = true;
-            }
+            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            alternarMusicaFondo();
         });
+
+        panelBotonesFlotantes.add(btnLogin);
+        panelBotonesFlotantes.add(btnBandera);
+        panelBotonesFlotantes.add(btnPatron);
+        panelBotonesFlotantes.add(btnMusica);
+
+        panelContenedorCapas.add(panelBotonesFlotantes);
+        panelContenedorCapas.add(lblGif);
+
+        return panelContenedorCapas;
     }
 
-    // --- Getters correctamente posicionados a nivel de clase ---
-    public JButton getBtnLogin() {
-        return btnLogin;
+    private JButton crearBotonConImagen(String rutaImagen) {
+        JButton boton = new JButton();
+
+        URL urlImg = getClass().getClassLoader().getResource(rutaImagen);
+        if (urlImg != null) {
+            ImageIcon iconoOriginal = new ImageIcon(urlImg);
+            if (iconoOriginal.getImage() != null) {
+                Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(200, 40, Image.SCALE_SMOOTH);
+                boton.setIcon(new ImageIcon(imagenEscalada));
+            }
+        } else {
+            boton.setText("Botón");
+            System.err.println("No se encontró la imagen del botón: " + rutaImagen);
+        }
+
+        boton.setContentAreaFilled(false);
+        boton.setBorderPainted(false);
+        boton.setFocusPainted(false);
+        boton.setOpaque(false);
+        boton.setBorder(BorderFactory.createEmptyBorder());
+        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        return boton;
     }
 
-    public JButton getBtnBandera() {
-        return btnBandera;
+    private void reproducirMusicaFondo(String rutaAudio) {
+        try {
+            URL urlAudio = getClass().getClassLoader().getResource(rutaAudio);
+            if (urlAudio != null) {
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlAudio);
+                clipMusicaFondo = AudioSystem.getClip();
+                clipMusicaFondo.open(audioStream);
+                clipMusicaFondo.loop(Clip.LOOP_CONTINUOUSLY);
+                clipMusicaFondo.start();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    public JButton getBtnPatron() {
-        return btnPatron;
+    private void reproducirEfectoSonido(String rutaAudio) {
+        try {
+            URL urlAudio = getClass().getClassLoader().getResource(rutaAudio);
+            if (urlAudio != null) {
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlAudio);
+                Clip clipClick = AudioSystem.getClip();
+                clipClick.open(audioStream);
+                clipClick.start();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    public JButton getBtnMusica() {
-        return btnMusica;
+    private void alternarMusicaFondo() {
+        if (musicaActiva) {
+            if (clipMusicaFondo != null && clipMusicaFondo.isRunning()) {
+                clipMusicaFondo.stop();
+            }
+            musicaActiva = false;
+        } else {
+            if (clipMusicaFondo != null) {
+                clipMusicaFondo.start();
+                clipMusicaFondo.loop(Clip.LOOP_CONTINUOUSLY);
+            }
+            musicaActiva = true;
+        }
     }
+
+    private void detenerMusicaFondo() {
+        if (clipMusicaFondo != null && clipMusicaFondo.isRunning()) {
+            clipMusicaFondo.stop();
+            clipMusicaFondo.close();
+        }
+    }
+
+    // --- Getters ---
+    public JButton getBtnLogin() { return btnLogin; }
+    public JButton getBtnBandera() { return btnBandera; }
+    public JButton getBtnPatron() { return btnPatron; }
+    public JButton getBtnMusica() { return btnMusica; }
 }

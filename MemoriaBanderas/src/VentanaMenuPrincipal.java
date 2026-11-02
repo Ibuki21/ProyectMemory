@@ -41,7 +41,7 @@ public class VentanaMenuPrincipal extends JFrame {
 
     public VentanaMenuPrincipal() {
         setTitle("Menú Principal - Juegos de Memoria");
-        setSize(480, 560);
+        setSize(1024, 576);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 

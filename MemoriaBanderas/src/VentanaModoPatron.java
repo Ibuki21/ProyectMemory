@@ -42,11 +42,11 @@ public class VentanaModoPatron extends JFrame {
 
     public VentanaModoPatron() {
         setTitle("Modo Patrones - Juegos de Memoria");
-        setSize(640, 780);
+        setSize(1024, 576);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        PanelFondo panelFondo = new PanelFondo("Recursos/Fondo.png");
+        PanelFondo panelFondo = new PanelFondo("Recursos/Fondo1.png");
         panelFondo.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 10, 8, 10);

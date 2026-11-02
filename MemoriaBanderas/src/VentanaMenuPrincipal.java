@@ -117,6 +117,11 @@ public class VentanaMenuPrincipal extends JFrame {
             VentanaLogin loginDialog = new VentanaLogin(this);
             loginDialog.setVisible(true);
         });
+        //--Evento para abrir la ventana de registro---
+        btnRegistrar.addActionListener(e -> {
+            VentanaRegistro ventanaRegistro = new VentanaRegistro(this);
+            ventanaRegistro.setVisible(true);
+        });
 
         // 📌 Botón 2: Encuentra la Pareja / Banderas
         btnBandera = crearBotonConImagen("Recursos/Memoria.png");

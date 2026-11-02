@@ -16,6 +16,7 @@ public class VentanaMenuPrincipal extends JFrame {
     private boolean musicaActiva = true;
 
     private JButton btnLogin;
+    private JButton btnRegistrar;
     private JButton btnBandera;
     private JButton btnPatron;
     private JButton btnMusica;
@@ -46,8 +47,8 @@ public class VentanaMenuPrincipal extends JFrame {
         CardLayout cl = (CardLayout) panelContenedor.getLayout();
         cl.show(panelContenedor, "INTRO");
 
-        // ⏱️ Duración de la intro en milisegundos (ej. 28000 ms = 28 segundos, ajústalo si dura más o menos)
-        int duracionIntroMillis = 28000;
+        // ⏱️ Duración de la intro en milisegundos (28 segundos)
+        int duracionIntroMillis = 25000;
 
         timerTransicion = new Timer(duracionIntroMillis, e -> {
             cl.show(panelContenedor, "MENU");
@@ -109,7 +110,7 @@ public class VentanaMenuPrincipal extends JFrame {
         panelBotonesFlotantes.setOpaque(false);
         panelBotonesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
 
-        // 📌 Botón 1: Iniciar Sesión / Registro
+        // 📌 Botón 1: Iniciar Sesión
         btnLogin = crearBotonConImagen("Recursos/Registro.png");
         btnLogin.setBounds(300, 310, 200, 40);
         btnLogin.addActionListener(e -> {
@@ -117,6 +118,18 @@ public class VentanaMenuPrincipal extends JFrame {
             VentanaLogin loginDialog = new VentanaLogin(this);
             loginDialog.setVisible(true);
         });
+
+        // 📌 Si también tienes un botón de Registro separado, puedes usarlo así:
+        // (O si el mismo botón de arriba abre el registro, asegúrate de tener una sola variable)
+        /*
+        btnRegistrar = crearBotonConImagen("Recursos/Registro.png");
+        btnRegistrar.setBounds(300, 310, 200, 40);
+        btnRegistrar.addActionListener(e -> {
+            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            VentanaRegistro ventanaRegistro = new VentanaRegistro(this);
+            ventanaRegistro.setVisible(true);
+        });
+        */
 
         // 📌 Botón 2: Encuentra la Pareja / Banderas
         btnBandera = crearBotonConImagen("Recursos/Memoria.png");
@@ -235,6 +248,7 @@ public class VentanaMenuPrincipal extends JFrame {
 
     // --- Getters ---
     public JButton getBtnLogin() { return btnLogin; }
+    public JButton getBtnRegistrar() { return btnRegistrar; }
     public JButton getBtnBandera() { return btnBandera; }
     public JButton getBtnPatron() { return btnPatron; }
     public JButton getBtnMusica() { return btnMusica; }

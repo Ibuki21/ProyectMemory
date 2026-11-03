@@ -46,7 +46,7 @@ public class VentanaModoPatron extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        PanelFondo panelFondo = new PanelFondo("Recursos/Fondo1.png");
+        PanelFondo panelFondo = new PanelFondo("Recursos/Fondo.jpg");
         panelFondo.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 10, 8, 10);

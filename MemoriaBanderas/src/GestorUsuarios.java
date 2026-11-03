@@ -1,11 +1,12 @@
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class GestorUsuarios {
     private static final List<Usuario> usuariosRegistrados = new ArrayList<>();
+    private static Usuario usuarioSesionActual = null; // Guardar el usuario que tiene la sesión activa
 
     public static boolean registrarUsuario(Usuario nuevoUsuario) {
-        // Verificar si el correo o usuario ya existe
         for (Usuario u : usuariosRegistrados) {
             if (u.getCorreo().equalsIgnoreCase(nuevoUsuario.getCorreo()) ||
                     u.getUsuario().equalsIgnoreCase(nuevoUsuario.getUsuario())) {
@@ -17,10 +18,10 @@ public class GestorUsuarios {
     }
 
     public static Usuario validarCredenciales(String identificador, String password) {
-        // Permite iniciar sesión usando correo o nombre de usuario
         for (Usuario u : usuariosRegistrados) {
             if ((u.getCorreo().equalsIgnoreCase(identificador) || u.getUsuario().equalsIgnoreCase(identificador))
                     && u.getPassword().equals(password)) {
+                usuarioSesionActual = u; // Se establece la sesión actual
                 return u;
             }
         }
@@ -34,5 +35,20 @@ public class GestorUsuarios {
             }
         }
         return false;
+    }
+
+    public static Usuario getUsuarioSesionActual() {
+        return usuarioSesionActual;
+    }
+
+    public static void cerrarSesion() {
+        usuarioSesionActual = null;
+    }
+
+    // Devuelve los usuarios ordenados por mayor puntuación
+    public static List<Usuario> getMejoresPuntuaciones() {
+        List<Usuario> listaOrdenada = new ArrayList<>(usuariosRegistrados);
+        listaOrdenada.sort(Comparator.comparingInt(Usuario::getPuntuacionMaxima).reversed());
+        return listaOrdenada;
     }
 }

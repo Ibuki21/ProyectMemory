@@ -2,8 +2,15 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.net.URL;
+import java.util.List;
 
 public class VentanaMenuPrincipal extends JFrame {
 
@@ -20,13 +27,19 @@ public class VentanaMenuPrincipal extends JFrame {
     private JButton btnBandera;
     private JButton btnPatron;
     private JButton btnMusica;
+    private DefaultTableModel modeloTabla;
+    private JTable tablaPuntuaciones;
+
+    // Variables para controlar el estado de Pantalla Completa
+    private boolean esPantallaCompleta = false;
+    private Rectangle limitesVentanaAnterior;
 
     public VentanaMenuPrincipal() {
         setTitle("Menú Principal - Juegos de Memoria y Banderas");
         setSize(ANCHO_VENTANA, ALTO_VENTANA);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true); // Permitir redimensionar para habilitar el botón de maximizar
 
         // 🎵 Iniciar música de fondo al abrir
         reproducirMusicaFondo("Recursos/Cancion/8 bits.wav");
@@ -35,11 +48,11 @@ public class VentanaMenuPrincipal extends JFrame {
         panelContenedor = new JPanel(new CardLayout());
         setContentPane(panelContenedor);
 
-        // 1. Panel de Introducción (Muestra el GIF de presentación "VideoJuego.gif")
-        JPanel panelIntro = crearPanelConGifEscalado("Recursos/VideoJuego.gif", ANCHO_VENTANA, ANCHO_VENTANA);
+        // 1. Panel de Introducción (Muestra el GIF de presentación con proporción conservada)
+        JPanel panelIntro = crearPanelConGifProporcional("Recursos/VideoJuego.gif");
         panelContenedor.add(panelIntro, "INTRO");
 
-        // 2. Panel del Menú Interactivo (Fondo.gif con los botones flotantes)
+        // 2. Panel del Menú Interactivo (Fondo.gif con los botones flotantes y la tabla de puntuaciones)
         JPanel panelMenu = crearPanelMenuConBotones();
         panelContenedor.add(panelMenu, "MENU");
 
@@ -47,7 +60,7 @@ public class VentanaMenuPrincipal extends JFrame {
         CardLayout cl = (CardLayout) panelContenedor.getLayout();
         cl.show(panelContenedor, "INTRO");
 
-        // ⏱️ Duración de la intro en milisegundos (28 segundos)
+        // ⏱️ Duración de la intro en milisegundos (25 segundos)
         int duracionIntroMillis = 25000;
 
         timerTransicion = new Timer(duracionIntroMillis, e -> {
@@ -57,83 +70,202 @@ public class VentanaMenuPrincipal extends JFrame {
         timerTransicion.setRepeats(false);
         timerTransicion.start();
 
-        // Detener la música al cerrar la ventana
-        addWindowListener(new java.awt.event.WindowAdapter() {
+        // ⌨️ Escucha global de teclado para alternar pantalla completa con F11 o salir con ESC
+        addKeyListener(new KeyAdapter() {
             @Override
-            public void windowClosed(java.awt.event.WindowEvent e) {
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_F11) {
+                    alternarPantallaCompleta();
+                } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE && esPantallaCompleta) {
+                    alternarPantallaCompleta();
+                }
+            }
+        });
+        setFocusable(true);
+
+        // Refrescar la tabla cuando la ventana recupera el foco o se reactiva
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowActivated(WindowEvent e) {
+                actualizarTablaPuntuaciones();
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
                 detenerMusicaFondo();
             }
         });
+
+        // Cargar puntuaciones iniciales
+        actualizarTablaPuntuaciones();
     }
 
-    // Panel que muestra el GIF de introducción escalado
-    private JPanel crearPanelConGifEscalado(String ruta, int ancho, int alto) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.BLACK);
+    /**
+     * Alterna la ventana entre modo normal y pantalla completa real (F11 / ESC).
+     */
+    private void alternarPantallaCompleta() {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice vc = ge.getDefaultScreenDevice();
 
-        JLabel lblGif = new JLabel();
-        lblGif.setHorizontalAlignment(SwingConstants.CENTER);
+        dispose(); // Ocultar temporalmente para modificar las propiedades de la ventana
 
-        URL urlGif = getClass().getClassLoader().getResource(ruta);
-        if (urlGif != null) {
-            ImageIcon iconoOriginal = new ImageIcon(urlGif);
-            Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(ancho, alto, Image.SCALE_DEFAULT);
-            lblGif.setIcon(new ImageIcon(imagenEscalada));
+        if (!esPantallaCompleta) {
+            limitesVentanaAnterior = getBounds();
+            setUndecorated(true); // Oculta barra de título y bordes para ocupar 100% de la pantalla
+            vc.setFullScreenWindow(this);
+            esPantallaCompleta = true;
         } else {
-            lblGif.setText("No se encontró el recurso: " + ruta);
-            lblGif.setForeground(Color.WHITE);
+            vc.setFullScreenWindow(null);
+            setUndecorated(false);
+            setBounds(limitesVentanaAnterior);
+            esPantallaCompleta = false;
         }
 
-        panel.add(lblGif, BorderLayout.CENTER);
+        setVisible(true);
+        requestFocus(); // Mantiene el foco para capturar eventos de teclado
+    }
+
+    /**
+     * Panel que muestra el GIF de introducción conservando estrictamente su proporción (Aspect Ratio)
+     * y rellenando los espacios sobrantes con negro.
+     */
+    private JPanel crearPanelConGifProporcional(String ruta) {
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.setColor(Color.BLACK);
+                g.fillRect(0, 0, getWidth(), getHeight());
+
+                URL urlGif = getClass().getClassLoader().getResource(ruta);
+                if (urlGif != null) {
+                    ImageIcon iconoOriginal = new ImageIcon(urlGif);
+                    Image imagen = iconoOriginal.getImage();
+
+                    int anchoOriginal = iconoOriginal.getIconWidth();
+                    int altoOriginal = iconoOriginal.getIconHeight();
+
+                    if (anchoOriginal > 0 && altoOriginal > 0) {
+                        int panelAncho = getWidth();
+                        int panelAlto = getHeight();
+
+                        // Calcular escala proporcional (Fit Inside sin deformar)
+                        double escala = Math.min((double) panelAncho / anchoOriginal, (double) panelAlto / altoOriginal);
+
+                        int nuevoAncho = (int) (anchoOriginal * escala);
+                        int nuevoAlto = (int) (altoOriginal * escala);
+
+                        // Centrar la imagen en el panel
+                        int x = (panelAncho - nuevoAncho) / 2;
+                        int y = (panelAlto - nuevoAlto) / 2;
+
+                        g.drawImage(imagen, x, y, nuevoAncho, nuevoAlto, this);
+                    }
+                }
+            }
+        };
+        panel.setBackground(Color.BLACK);
         return panel;
     }
 
-    // Panel con capas para superponer los botones sobre el "Fondo.gif"
+    // Panel con capas para superponer los botones y la tabla sobre el "Fondo.gif"
     private JPanel crearPanelMenuConBotones() {
-        JPanel panelContenedorCapas = new JPanel(null);
+        JPanel panelContenedorCapas = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                URL urlGif = getClass().getClassLoader().getResource("Recursos/Fondo.gif");
+                if (urlGif != null) {
+                    ImageIcon iconoOriginal = new ImageIcon(urlGif);
+                    g.drawImage(iconoOriginal.getImage(), 0, 0, getWidth(), getHeight(), this);
+                } else {
+                    g.setColor(new Color(20, 30, 50));
+                    g.fillRect(0, 0, getWidth(), getHeight());
+                }
+            }
+        };
+        panelContenedorCapas.setLayout(null);
         panelContenedorCapas.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
 
-        // Capa inferior: El GIF de fondo en bucle
-        JLabel lblGif = new JLabel();
-        lblGif.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
-        URL urlGif = getClass().getClassLoader().getResource("Recursos/Fondo.gif");
-        if (urlGif != null) {
-            ImageIcon iconoOriginal = new ImageIcon(urlGif);
-            Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(ANCHO_VENTANA, ALTO_VENTANA, Image.SCALE_DEFAULT);
-            lblGif.setIcon(new ImageIcon(imagenEscalada));
-        } else {
-            System.err.println("No se pudo cargar el GIF de fondo: Recursos/Fondo.gif");
-        }
+        // Capa superior transparente para los botones y la tabla flotante
+        JPanel panelComponentesFlotantes = new JPanel(null);
+        panelComponentesFlotantes.setOpaque(false);
+        panelComponentesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
 
-        // Capa superior transparente para los botones flotantes
-        JPanel panelBotonesFlotantes = new JPanel(null);
-        panelBotonesFlotantes.setOpaque(false);
-        panelBotonesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
+        // 🏆 Tabla de Mejores Puntuaciones (Leaderboard Flotante con fondo translúcido integrado)
+        JPanel panelLeaderboard = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                g.setColor(new Color(15, 25, 45, 200)); // Azul oscuro translúcido
+                g.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                super.paintComponent(g);
+            }
+        };
+        panelLeaderboard.setOpaque(false);
+        panelLeaderboard.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
+                " Top Jugadores ",
+                0, 0, new Font("Segoe UI", Font.BOLD, 14), Color.WHITE));
+        panelLeaderboard.setBounds(20, 270, 260, 260);
 
-        // 📌 Botón 1: Iniciar Sesión
-        btnLogin = crearBotonConImagen("Recursos/Registro.png");
-        btnLogin.setBounds(300, 310, 200, 40);
+        String[] columnas = {"Pos.", "Usuario", "Puntos"};
+        modeloTabla = new DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        tablaPuntuaciones = new JTable(modeloTabla);
+        tablaPuntuaciones.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tablaPuntuaciones.setRowHeight(24);
+        tablaPuntuaciones.getTableHeader().setReorderingAllowed(false);
+
+        // Estilos visuales de la tabla para fondo oscuro
+        tablaPuntuaciones.setBackground(new Color(20, 35, 60, 150));
+        tablaPuntuaciones.setForeground(Color.WHITE);
+        tablaPuntuaciones.setSelectionBackground(new Color(70, 130, 180));
+        tablaPuntuaciones.setSelectionForeground(Color.WHITE);
+        tablaPuntuaciones.setGridColor(new Color(50, 80, 120));
+
+        tablaPuntuaciones.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        tablaPuntuaciones.getTableHeader().setBackground(new Color(30, 50, 80));
+        tablaPuntuaciones.getTableHeader().setForeground(Color.WHITE);
+
+        // Formato y centrado de columnas
+        tablaPuntuaciones.getColumnModel().getColumn(0).setPreferredWidth(35);
+        tablaPuntuaciones.getColumnModel().getColumn(1).setPreferredWidth(130);
+        tablaPuntuaciones.getColumnModel().getColumn(2).setPreferredWidth(60);
+
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        centerRenderer.setOpaque(false);
+        tablaPuntuaciones.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+        tablaPuntuaciones.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+
+        DefaultTableCellRenderer textRenderer = new DefaultTableCellRenderer();
+        textRenderer.setHorizontalAlignment(JLabel.LEFT);
+        textRenderer.setOpaque(false);
+        tablaPuntuaciones.getColumnModel().getColumn(1).setCellRenderer(textRenderer);
+
+        JScrollPane scrollTabla = new JScrollPane(tablaPuntuaciones);
+        scrollTabla.setOpaque(false);
+        scrollTabla.getViewport().setOpaque(false);
+        scrollTabla.setBorder(BorderFactory.createEmptyBorder());
+        panelLeaderboard.add(scrollTabla, BorderLayout.CENTER);
+
+        // 📌 Botón 1: Iniciar Sesión (Más grandes: 260x50)
+        btnLogin = crearBotonConImagen("Recursos/Registro.png", 260, 50);
+        btnLogin.setBounds(550, 290, 260, 50);
         btnLogin.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaLogin loginDialog = new VentanaLogin(this);
             loginDialog.setVisible(true);
         });
 
-        // 📌 Si también tienes un botón de Registro separado, puedes usarlo así:
-        // (O si el mismo botón de arriba abre el registro, asegúrate de tener una sola variable)
-        /*
-        btnRegistrar = crearBotonConImagen("Recursos/Registro.png");
-        btnRegistrar.setBounds(300, 310, 200, 40);
-        btnRegistrar.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
-            VentanaRegistro ventanaRegistro = new VentanaRegistro(this);
-            ventanaRegistro.setVisible(true);
-        });
-        */
-
         // 📌 Botón 2: Encuentra la Pareja / Banderas
-        btnBandera = crearBotonConImagen("Recursos/Memoria.png");
-        btnBandera.setBounds(300, 365, 200, 40);
+        btnBandera = crearBotonConImagen("Recursos/Memoria.png", 260, 50);
+        btnBandera.setBounds(550, 350, 260, 50);
         btnBandera.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
@@ -141,8 +273,8 @@ public class VentanaMenuPrincipal extends JFrame {
         });
 
         // 📌 Botón 3: Siguiendo el Patrón
-        btnPatron = crearBotonConImagen("Recursos/Patron.png");
-        btnPatron.setBounds(300, 420, 200, 40);
+        btnPatron = crearBotonConImagen("Recursos/Patron.png", 260, 50);
+        btnPatron.setBounds(550, 410, 260, 50);
         btnPatron.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
@@ -152,32 +284,53 @@ public class VentanaMenuPrincipal extends JFrame {
         });
 
         // 📌 Botón 4: Control de Música / Silenciar
-        btnMusica = crearBotonConImagen("Recursos/Musica.png");
-        btnMusica.setBounds(300, 485, 200, 40);
+        btnMusica = crearBotonConImagen("Recursos/Musica.png", 260, 50);
+        btnMusica.setBounds(550, 470, 260, 50);
         btnMusica.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             alternarMusicaFondo();
         });
 
-        panelBotonesFlotantes.add(btnLogin);
-        panelBotonesFlotantes.add(btnBandera);
-        panelBotonesFlotantes.add(btnPatron);
-        panelBotonesFlotantes.add(btnMusica);
+        // Agregar componentes al panel flotante
+        panelComponentesFlotantes.add(panelLeaderboard);
+        panelComponentesFlotantes.add(btnLogin);
+        panelComponentesFlotantes.add(btnBandera);
+        panelComponentesFlotantes.add(btnPatron);
+        panelComponentesFlotantes.add(btnMusica);
 
-        panelContenedorCapas.add(panelBotonesFlotantes);
-        panelContenedorCapas.add(lblGif);
+        panelContenedorCapas.add(panelComponentesFlotantes);
 
         return panelContenedorCapas;
     }
 
-    private JButton crearBotonConImagen(String rutaImagen) {
+    /**
+     * Refresca los datos expuestos en la tabla a partir de GestorUsuarios.
+     */
+    public void actualizarTablaPuntuaciones() {
+        if (modeloTabla == null) {
+            return;
+        }
+        modeloTabla.setRowCount(0);
+        List<Usuario> ranking = GestorUsuarios.getMejoresPuntuaciones();
+
+        int posicion = 1;
+        for (Usuario u : ranking) {
+            modeloTabla.addRow(new Object[]{
+                    posicion++,
+                    u.getUsuario(),
+                    u.getPuntuacionMaxima()
+            });
+        }
+    }
+
+    private JButton crearBotonConImagen(String rutaImagen, int ancho, int alto) {
         JButton boton = new JButton();
 
         URL urlImg = getClass().getClassLoader().getResource(rutaImagen);
         if (urlImg != null) {
             ImageIcon iconoOriginal = new ImageIcon(urlImg);
             if (iconoOriginal.getImage() != null) {
-                Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(200, 40, Image.SCALE_SMOOTH);
+                Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
                 boton.setIcon(new ImageIcon(imagenEscalada));
             }
         } else {

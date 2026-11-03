@@ -197,8 +197,15 @@ public class ControladorModoPatron {
         turnoJugador = false;
         detenerTimers();
 
+        int puntajeObtenido = logica.getPatronesCompletados();
+        Usuario actual = GestorUsuarios.getUsuarioSesionActual();
+
+        if (actual != null) {
+            actual.setPuntuacionMaxima(puntajeObtenido);
+        }
+
         JOptionPane.showMessageDialog(vista,
-                mensaje + "\nPatrones completados: " + logica.getPatronesCompletados(),
+                mensaje + "\nPatrones completados: " + puntajeObtenido,
                 "Fin del juego", JOptionPane.INFORMATION_MESSAGE);
         vista.dispose();
     }

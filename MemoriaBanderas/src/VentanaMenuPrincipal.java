@@ -2,8 +2,13 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.net.URL;
+import java.util.List;
 
 public class VentanaMenuPrincipal extends JFrame {
 
@@ -20,6 +25,8 @@ public class VentanaMenuPrincipal extends JFrame {
     private JButton btnBandera;
     private JButton btnPatron;
     private JButton btnMusica;
+    private DefaultTableModel modeloTabla;
+    private JTable tablaPuntuaciones;
 
     public VentanaMenuPrincipal() {
         setTitle("Menú Principal - Juegos de Memoria y Banderas");
@@ -39,7 +46,7 @@ public class VentanaMenuPrincipal extends JFrame {
         JPanel panelIntro = crearPanelConGifEscalado("Recursos/VideoJuego.gif", ANCHO_VENTANA, ANCHO_VENTANA);
         panelContenedor.add(panelIntro, "INTRO");
 
-        // 2. Panel del Menú Interactivo (Fondo.gif con los botones flotantes)
+        // 2. Panel del Menú Interactivo (Fondo.gif con los botones flotantes y la tabla de puntuaciones)
         JPanel panelMenu = crearPanelMenuConBotones();
         panelContenedor.add(panelMenu, "MENU");
 
@@ -47,7 +54,7 @@ public class VentanaMenuPrincipal extends JFrame {
         CardLayout cl = (CardLayout) panelContenedor.getLayout();
         cl.show(panelContenedor, "INTRO");
 
-        // ⏱️ Duración de la intro en milisegundos (28 segundos)
+        // ⏱️ Duración de la intro en milisegundos (25 segundos)
         int duracionIntroMillis = 25000;
 
         timerTransicion = new Timer(duracionIntroMillis, e -> {
@@ -57,13 +64,21 @@ public class VentanaMenuPrincipal extends JFrame {
         timerTransicion.setRepeats(false);
         timerTransicion.start();
 
-        // Detener la música al cerrar la ventana
-        addWindowListener(new java.awt.event.WindowAdapter() {
+        // Refrescar la tabla cuando la ventana recupera el foco o se reactiva
+        addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosed(java.awt.event.WindowEvent e) {
+            public void windowActivated(WindowEvent e) {
+                actualizarTablaPuntuaciones();
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
                 detenerMusicaFondo();
             }
         });
+
+        // Cargar puntuaciones iniciales
+        actualizarTablaPuntuaciones();
     }
 
     // Panel que muestra el GIF de introducción escalado
@@ -88,7 +103,7 @@ public class VentanaMenuPrincipal extends JFrame {
         return panel;
     }
 
-    // Panel con capas para superponer los botones sobre el "Fondo.gif"
+    // Panel con capas para superponer los botones y la tabla sobre el "Fondo.gif"
     private JPanel crearPanelMenuConBotones() {
         JPanel panelContenedorCapas = new JPanel(null);
         panelContenedorCapas.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
@@ -105,35 +120,60 @@ public class VentanaMenuPrincipal extends JFrame {
             System.err.println("No se pudo cargar el GIF de fondo: Recursos/Fondo.gif");
         }
 
-        // Capa superior transparente para los botones flotantes
-        JPanel panelBotonesFlotantes = new JPanel(null);
-        panelBotonesFlotantes.setOpaque(false);
-        panelBotonesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
+        // Capa superior transparente para los botones y la tabla flotante
+        JPanel panelComponentesFlotantes = new JPanel(null);
+        panelComponentesFlotantes.setOpaque(false);
+        panelComponentesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
+
+        // 🏆 Tabla de Mejores Puntuaciones (Leaderboard Flotante a la izquierda)
+        JPanel panelLeaderboard = new JPanel(new BorderLayout());
+        panelLeaderboard.setOpaque(false);
+        panelLeaderboard.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
+                " Top Jugadores ",
+                0, 0, new Font("Segoe UI", Font.BOLD, 14), Color.WHITE));
+        panelLeaderboard.setBounds(20, 290, 260, 240);
+
+        String[] columnas = {"Pos.", "Usuario", "Puntos"};
+        modeloTabla = new DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        tablaPuntuaciones = new JTable(modeloTabla);
+        tablaPuntuaciones.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tablaPuntuaciones.setRowHeight(22);
+        tablaPuntuaciones.getTableHeader().setReorderingAllowed(false);
+        tablaPuntuaciones.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+
+        // Formato y centrado de columnas
+        tablaPuntuaciones.getColumnModel().getColumn(0).setPreferredWidth(35);
+        tablaPuntuaciones.getColumnModel().getColumn(1).setPreferredWidth(130);
+        tablaPuntuaciones.getColumnModel().getColumn(2).setPreferredWidth(60);
+
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        tablaPuntuaciones.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+        tablaPuntuaciones.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+
+        JScrollPane scrollTabla = new JScrollPane(tablaPuntuaciones);
+        scrollTabla.getViewport().setOpaque(true);
+        panelLeaderboard.add(scrollTabla, BorderLayout.CENTER);
 
         // 📌 Botón 1: Iniciar Sesión
         btnLogin = crearBotonConImagen("Recursos/Registro.png");
-        btnLogin.setBounds(300, 310, 200, 40);
+        btnLogin.setBounds(310, 310, 200, 40);
         btnLogin.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaLogin loginDialog = new VentanaLogin(this);
             loginDialog.setVisible(true);
         });
 
-        // 📌 Si también tienes un botón de Registro separado, puedes usarlo así:
-        // (O si el mismo botón de arriba abre el registro, asegúrate de tener una sola variable)
-        /*
-        btnRegistrar = crearBotonConImagen("Recursos/Registro.png");
-        btnRegistrar.setBounds(300, 310, 200, 40);
-        btnRegistrar.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
-            VentanaRegistro ventanaRegistro = new VentanaRegistro(this);
-            ventanaRegistro.setVisible(true);
-        });
-        */
-
         // 📌 Botón 2: Encuentra la Pareja / Banderas
         btnBandera = crearBotonConImagen("Recursos/Memoria.png");
-        btnBandera.setBounds(300, 365, 200, 40);
+        btnBandera.setBounds(310, 365, 200, 40);
         btnBandera.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
@@ -142,7 +182,7 @@ public class VentanaMenuPrincipal extends JFrame {
 
         // 📌 Botón 3: Siguiendo el Patrón
         btnPatron = crearBotonConImagen("Recursos/Patron.png");
-        btnPatron.setBounds(300, 420, 200, 40);
+        btnPatron.setBounds(310, 420, 200, 40);
         btnPatron.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
@@ -153,21 +193,43 @@ public class VentanaMenuPrincipal extends JFrame {
 
         // 📌 Botón 4: Control de Música / Silenciar
         btnMusica = crearBotonConImagen("Recursos/Musica.png");
-        btnMusica.setBounds(300, 485, 200, 40);
+        btnMusica.setBounds(310, 485, 200, 40);
         btnMusica.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             alternarMusicaFondo();
         });
 
-        panelBotonesFlotantes.add(btnLogin);
-        panelBotonesFlotantes.add(btnBandera);
-        panelBotonesFlotantes.add(btnPatron);
-        panelBotonesFlotantes.add(btnMusica);
+        // Agregar componentes al panel flotante
+        panelComponentesFlotantes.add(panelLeaderboard);
+        panelComponentesFlotantes.add(btnLogin);
+        panelComponentesFlotantes.add(btnBandera);
+        panelComponentesFlotantes.add(btnPatron);
+        panelComponentesFlotantes.add(btnMusica);
 
-        panelContenedorCapas.add(panelBotonesFlotantes);
+        panelContenedorCapas.add(panelComponentesFlotantes);
         panelContenedorCapas.add(lblGif);
 
         return panelContenedorCapas;
+    }
+
+    /**
+     * Refresca los datos expuestos en la tabla a partir de GestorUsuarios.
+     */
+    public void actualizarTablaPuntuaciones() {
+        if (modeloTabla == null) {
+            return;
+        }
+        modeloTabla.setRowCount(0);
+        List<Usuario> ranking = GestorUsuarios.getMejoresPuntuaciones();
+
+        int posicion = 1;
+        for (Usuario u : ranking) {
+            modeloTabla.addRow(new Object[]{
+                    posicion++,
+                    u.getUsuario(),
+                    u.getPuntuacionMaxima()
+            });
+        }
     }
 
     private JButton crearBotonConImagen(String rutaImagen) {

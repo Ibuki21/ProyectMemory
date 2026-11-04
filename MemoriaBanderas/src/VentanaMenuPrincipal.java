@@ -218,19 +218,9 @@ public class VentanaMenuPrincipal extends JFrame {
 
         tablaPuntuaciones = new JTable(modeloTabla);
         tablaPuntuaciones.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        tablaPuntuaciones.setRowHeight(24);
+        tablaPuntuaciones.setRowHeight(22);
         tablaPuntuaciones.getTableHeader().setReorderingAllowed(false);
-
-        // Estilos visuales de la tabla para fondo oscuro
-        tablaPuntuaciones.setBackground(new Color(20, 35, 60, 150));
-        tablaPuntuaciones.setForeground(Color.WHITE);
-        tablaPuntuaciones.setSelectionBackground(new Color(70, 130, 180));
-        tablaPuntuaciones.setSelectionForeground(Color.WHITE);
-        tablaPuntuaciones.setGridColor(new Color(50, 80, 120));
-
         tablaPuntuaciones.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        tablaPuntuaciones.getTableHeader().setBackground(new Color(30, 50, 80));
-        tablaPuntuaciones.getTableHeader().setForeground(Color.WHITE);
 
         // Formato y centrado de columnas
         tablaPuntuaciones.getColumnModel().getColumn(0).setPreferredWidth(35);
@@ -239,19 +229,11 @@ public class VentanaMenuPrincipal extends JFrame {
 
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        centerRenderer.setOpaque(false);
         tablaPuntuaciones.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
         tablaPuntuaciones.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
 
-        DefaultTableCellRenderer textRenderer = new DefaultTableCellRenderer();
-        textRenderer.setHorizontalAlignment(JLabel.LEFT);
-        textRenderer.setOpaque(false);
-        tablaPuntuaciones.getColumnModel().getColumn(1).setCellRenderer(textRenderer);
-
         JScrollPane scrollTabla = new JScrollPane(tablaPuntuaciones);
-        scrollTabla.setOpaque(false);
-        scrollTabla.getViewport().setOpaque(false);
-        scrollTabla.setBorder(BorderFactory.createEmptyBorder());
+        scrollTabla.getViewport().setOpaque(true);
         panelLeaderboard.add(scrollTabla, BorderLayout.CENTER);
 
         // 📌 Botón 1: Iniciar Sesión (Más grandes: 260x50)

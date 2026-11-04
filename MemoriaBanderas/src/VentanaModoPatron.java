@@ -46,7 +46,7 @@ public class VentanaModoPatron extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        PanelFondo panelFondo = new PanelFondo("Recursos/Fondo.jpg");
+        PanelFondo panelFondo = new PanelFondo("Recursos/Fondo1.png");
         panelFondo.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 10, 8, 10);
@@ -107,8 +107,8 @@ public class VentanaModoPatron extends JFrame {
 
     // Resalta una casilla (la usa el controlador al mostrar el patrón y al hacer clic)
     public void resaltarCasilla(int fila, int columna) {
-        botonesCasillas[fila][columna].setBackground(Color.YELLOW);
-        botonesCasillas[fila][columna].setBorder(BorderFactory.createLineBorder(Color.YELLOW, 4));
+        botonesCasillas[fila][columna].setBackground(Color.BLACK);
+        botonesCasillas[fila][columna].setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
     }
 
     // Devuelve una casilla a su aspecto normal

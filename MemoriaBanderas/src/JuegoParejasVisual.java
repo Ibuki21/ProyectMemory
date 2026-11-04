@@ -1,100 +1,151 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.net.URL;
 
 public class JuegoParejasVisual extends JFrame {
 
-    public JuegoParejasVisual() {
-        setTitle("Encuentra la Pareja - Banderas");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Cambiado a DISPOSE para no cerrar toda la app al salir del juego
-        setSize(700, 620);
-        setLocationRelativeTo(null);
-        setResizable(false);
-        getContentPane().setBackground(new Color(30, 60, 110));
-        setLayout(new BorderLayout());
+    static class PanelFondo extends JPanel {
+        private Image imagenFondo;
 
-        JLabel lblTitulo = new JLabel("ENCUENTRA LA PAREJA", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        lblTitulo.setForeground(Color.WHITE);
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(15, 0, 10, 0));
-
-        JLabel lblIntentos = new JLabel("Intentos: 0", SwingConstants.CENTER);
-        lblIntentos.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblIntentos.setForeground(new Color(200, 220, 255));
-
-        JLabel lblPares = new JLabel("Pares encontrados: 0 / 10", SwingConstants.CENTER);
-        lblPares.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblPares.setForeground(new Color(200, 220, 255));
-
-        JPanel panelInfo = new JPanel(new FlowLayout(FlowLayout.CENTER, 40, 5));
-        panelInfo.setOpaque(false);
-        panelInfo.add(lblIntentos);
-        panelInfo.add(lblPares);
-
-        JPanel panelSuperior = new JPanel(new BorderLayout());
-        panelSuperior.setOpaque(false);
-        panelSuperior.add(lblTitulo, BorderLayout.NORTH);
-        panelSuperior.add(panelInfo, BorderLayout.CENTER);
-        add(panelSuperior, BorderLayout.NORTH);
-
-        JPanel panelCartas = new JPanel(new GridLayout(4, 5, 12, 12));
-        panelCartas.setBackground(new Color(30, 60, 110));
-        panelCartas.setBorder(BorderFactory.createEmptyBorder(15, 25, 15, 25));
-
-        BufferedImage img = new BufferedImage(100, 70, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = img.createGraphics();
-        GradientPaint gp = new GradientPaint(0, 0, new Color(40, 80, 160), 0, 70, new Color(20, 50, 110));
-        g.setPaint(gp);
-        g.fillRect(0, 0, 100, 70);
-        g.setColor(new Color(150, 190, 255));
-        g.setStroke(new BasicStroke(3));
-        g.drawRect(2, 2, 95, 65);
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Segoe UI", Font.BOLD, 36));
-        FontMetrics fm = g.getFontMetrics();
-
-        // Líneas corregidas y unidas correctamente:
-        int x = (100 - fm.stringWidth("?")) / 2;
-        int y = (70 - fm.getHeight()) / 2 + fm.getAscent();
-
-        g.drawString("?", x, y);
-        g.dispose();
-        ImageIcon dorso = new ImageIcon(img);
-
-        for (int i = 0; i < 20; i++) {
-            JButton carta = new JButton();
-            carta.setPreferredSize(new Dimension(100, 70));
-            carta.setIcon(dorso);
-            carta.setBackground(new Color(20, 40, 80));
-            carta.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 220), 2));
-            carta.setFocusPainted(false);
-            carta.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            panelCartas.add(carta);
+        public PanelFondo(String ruta) {
+            URL urlImagen = getClass().getClassLoader().getResource(ruta);
+            if (urlImagen != null) {
+                imagenFondo = new ImageIcon(urlImagen).getImage();
+            }
         }
 
-        add(panelCartas, BorderLayout.CENTER);
-
-        JButton btnReiniciar = new JButton("Reiniciar");
-        btnReiniciar.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnReiniciar.setBackground(new Color(70, 130, 180));
-        btnReiniciar.setForeground(Color.WHITE);
-        btnReiniciar.setFocusPainted(false);
-        btnReiniciar.setPreferredSize(new Dimension(120, 35));
-
-        JButton btnSalir = new JButton("Salir");
-        btnSalir.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnSalir.setBackground(new Color(180, 70, 70));
-        btnSalir.setForeground(Color.WHITE);
-        btnSalir.setFocusPainted(false);
-        btnSalir.setPreferredSize(new Dimension(120, 35));
-
-        // Evento para el botón Salir de la ventana del juego
-        btnSalir.addActionListener(e -> dispose());
-
-        JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 15));
-        panelInferior.setOpaque(false);
-        panelInferior.add(btnReiniciar);
-        panelInferior.add(btnSalir);
-        add(panelInferior, BorderLayout.SOUTH);
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (imagenFondo != null) {
+                g.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), this);
+            } else {
+                g.setColor(new Color(30, 60, 110));
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+        }
     }
+
+    private static final int FILAS = 4;
+    private static final int COLUMNAS = 5;
+
+    // Componentes Tablero 1
+    private JButton[][] botonesTablero1;
+    private JLabel lblIntentos1, lblPares1;
+
+    // Componentes Tablero 2
+    private JButton[][] botonesTablero2;
+    private JLabel lblIntentos2, lblPares2;
+
+    private JButton btnReiniciar;
+
+    public JuegoParejasVisual() {
+        setTitle("Doble Desafío: Encuentra la Pareja - Juegos de Memoria");
+        setSize(1280, 720); // Ventana más ancha para albergar los dos tableros cómodamente
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+        PanelFondo panelFondo = new PanelFondo("Recursos/Fondo1.jpg");
+        panelFondo.setLayout(new BorderLayout(15, 15));
+        panelFondo.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // --- Título Principal ---
+        JLabel lblTitulo = new JLabel("MODO DOBLE TABLERO: ENCUENTRA LAS PAREJAS", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTitulo.setForeground(Color.WHITE);
+        panelFondo.add(lblTitulo, BorderLayout.NORTH);
+
+        // --- Panel Central con los Dos Tableros Lado a Lado ---
+        JPanel panelContenedorTableros = new JPanel(new GridLayout(1, 2, 25, 0));
+        panelContenedorTableros.setOpaque(false);
+
+        // Crear Tablero 1
+        JPanel panelPanel1 = crearPanelSubTablero("Tablero 1", true);
+        panelContenedorTableros.add(panelPanel1);
+
+        // Crear Tablero 2
+        JPanel panelPanel2 = crearPanelSubTablero("Tablero 2", false);
+        panelContenedorTableros.add(panelPanel2);
+
+        panelFondo.add(panelContenedorTableros, BorderLayout.CENTER);
+
+        // --- Panel Inferior (Botón Reiniciar) ---
+        JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panelInferior.setOpaque(false);
+        btnReiniciar = new JButton("Reiniciar Ambos Tableros");
+        btnReiniciar.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        panelInferior.add(btnReiniciar);
+        panelFondo.add(panelInferior, BorderLayout.SOUTH);
+
+        setContentPane(panelFondo);
+
+        // Inicializamos el controlador para manejar ambos tableros
+        new ControladorJuegoParejas(this);
+    }
+
+    private JPanel crearPanelSubTablero(String nombreTablero, boolean esTableroUno) {
+        JPanel panelSub = new JPanel(new BorderLayout(5, 5));
+        panelSub.setOpaque(false);
+        panelSub.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
+                " " + nombreTablero + " ",
+                0, 0, new Font("Segoe UI", Font.BOLD, 15), Color.WHITE));
+
+        // Estadísticas del subtablero
+        JPanel panelStats = new JPanel(new GridLayout(1, 2));
+        panelStats.setOpaque(false);
+        JLabel lblIntentos = new JLabel("Intentos: 0", SwingConstants.CENTER);
+        lblIntentos.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblIntentos.setForeground(new Color(220, 235, 255));
+
+        JLabel lblPares = new JLabel("Pares: 0 / 10", SwingConstants.CENTER);
+        lblPares.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblPares.setForeground(new Color(220, 235, 255));
+
+        panelStats.add(lblIntentos);
+        panelStats.add(lblPares);
+        panelSub.add(panelStats, BorderLayout.NORTH);
+
+        // Cuadrícula de botones (4x5)
+        JPanel panelGrid = new JPanel(new GridLayout(FILAS, COLUMNAS, 8, 8));
+        panelGrid.setOpaque(false);
+
+        JButton[][] botones = new JButton[FILAS][COLUMNAS];
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                JButton btn = new JButton();
+                btn.setPreferredSize(new Dimension(105, 95));
+                btn.setFocusPainted(false);
+                btn.setBackground(new Color(30, 50, 80));
+                btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                botones[i][j] = btn;
+                panelGrid.add(btn);
+            }
+        }
+        panelSub.add(panelGrid, BorderLayout.CENTER);
+
+        if (esTableroUno) {
+            botonesTablero1 = botones;
+            lblIntentos1 = lblIntentos;
+            lblPares1 = lblPares;
+        } else {
+            botonesTablero2 = botones;
+            lblIntentos2 = lblIntentos;
+            lblPares2 = lblPares;
+        }
+
+        return panelSub;
+    }
+
+    // --- Getters ---
+    public JButton[][] getBotonesTablero1() { return botonesTablero1; }
+    public JButton[][] getBotonesTablero2() { return botonesTablero2; }
+    public JLabel getLblIntentos1() { return lblIntentos1; }
+    public JLabel getLblPares1() { return lblPares1; }
+    public JLabel getLblIntentos2() { return lblIntentos2; }
+    public JLabel getLblPares2() { return lblPares2; }
+    public JButton getBtnReiniciar() { return btnReiniciar; }
+    public int getFilas() { return FILAS; }
+    public int getColumnas() { return COLUMNAS; }
 }

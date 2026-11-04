@@ -5,8 +5,11 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+<<<<<<< HEAD
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+=======
+>>>>>>> origin/main
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URL;
@@ -29,10 +32,13 @@ public class VentanaMenuPrincipal extends JFrame {
     private JButton btnMusica;
     private DefaultTableModel modeloTabla;
     private JTable tablaPuntuaciones;
+<<<<<<< HEAD
 
     // Variables para controlar el estado de Pantalla Completa
     private boolean esPantallaCompleta = false;
     private Rectangle limitesVentanaAnterior;
+=======
+>>>>>>> origin/main
 
     public VentanaMenuPrincipal() {
         setTitle("Menú Principal - Juegos de Memoria y Banderas");
@@ -70,6 +76,7 @@ public class VentanaMenuPrincipal extends JFrame {
         timerTransicion.setRepeats(false);
         timerTransicion.start();
 
+<<<<<<< HEAD
         // ⌨️ Escucha global de teclado para alternar pantalla completa con F11 o salir con ESC
         addKeyListener(new KeyAdapter() {
             @Override
@@ -86,6 +93,11 @@ public class VentanaMenuPrincipal extends JFrame {
         // Refrescar la tabla cuando la ventana recupera el foco o se reactiva
         addWindowListener(new WindowAdapter() {
             @Override
+=======
+        // Refrescar la tabla cuando la ventana recupera el foco o se reactiva
+        addWindowListener(new WindowAdapter() {
+            @Override
+>>>>>>> origin/main
             public void windowActivated(WindowEvent e) {
                 actualizarTablaPuntuaciones();
             }
@@ -192,6 +204,7 @@ public class VentanaMenuPrincipal extends JFrame {
         panelComponentesFlotantes.setOpaque(false);
         panelComponentesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
 
+<<<<<<< HEAD
         // 🏆 Tabla de Mejores Puntuaciones (Leaderboard Flotante con fondo translúcido integrado)
         JPanel panelLeaderboard = new JPanel(new BorderLayout()) {
             @Override
@@ -201,11 +214,21 @@ public class VentanaMenuPrincipal extends JFrame {
                 super.paintComponent(g);
             }
         };
+=======
+        // Capa superior transparente para los botones y la tabla flotante
+        JPanel panelComponentesFlotantes = new JPanel(null);
+        panelComponentesFlotantes.setOpaque(false);
+        panelComponentesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
+
+        // 🏆 Tabla de Mejores Puntuaciones (Leaderboard Flotante a la izquierda)
+        JPanel panelLeaderboard = new JPanel(new BorderLayout());
+>>>>>>> origin/main
         panelLeaderboard.setOpaque(false);
         panelLeaderboard.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
                 " Top Jugadores ",
                 0, 0, new Font("Segoe UI", Font.BOLD, 14), Color.WHITE));
+<<<<<<< HEAD
         panelLeaderboard.setBounds(20, 270, 260, 260);
 
         String[] columnas = {"Pos.", "Usuario", "Puntos"};
@@ -257,6 +280,41 @@ public class VentanaMenuPrincipal extends JFrame {
         // 📌 Botón 1: Iniciar Sesión (Más grandes: 260x50)
         btnLogin = crearBotonConImagen("Recursos/Registro.png", 260, 50);
         btnLogin.setBounds(550, 290, 260, 50);
+=======
+        panelLeaderboard.setBounds(20, 290, 260, 240);
+
+        String[] columnas = {"Pos.", "Usuario", "Puntos"};
+        modeloTabla = new DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        tablaPuntuaciones = new JTable(modeloTabla);
+        tablaPuntuaciones.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tablaPuntuaciones.setRowHeight(22);
+        tablaPuntuaciones.getTableHeader().setReorderingAllowed(false);
+        tablaPuntuaciones.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+
+        // Formato y centrado de columnas
+        tablaPuntuaciones.getColumnModel().getColumn(0).setPreferredWidth(35);
+        tablaPuntuaciones.getColumnModel().getColumn(1).setPreferredWidth(130);
+        tablaPuntuaciones.getColumnModel().getColumn(2).setPreferredWidth(60);
+
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        tablaPuntuaciones.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+        tablaPuntuaciones.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+
+        JScrollPane scrollTabla = new JScrollPane(tablaPuntuaciones);
+        scrollTabla.getViewport().setOpaque(true);
+        panelLeaderboard.add(scrollTabla, BorderLayout.CENTER);
+
+        // 📌 Botón 1: Iniciar Sesión
+        btnLogin = crearBotonConImagen("Recursos/Registro.png");
+        btnLogin.setBounds(310, 310, 200, 40);
+>>>>>>> origin/main
         btnLogin.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaLogin loginDialog = new VentanaLogin(this);
@@ -264,8 +322,13 @@ public class VentanaMenuPrincipal extends JFrame {
         });
 
         // 📌 Botón 2: Encuentra la Pareja / Banderas
+<<<<<<< HEAD
         btnBandera = crearBotonConImagen("Recursos/Memoria.png", 260, 50);
         btnBandera.setBounds(550, 350, 260, 50);
+=======
+        btnBandera = crearBotonConImagen("Recursos/Memoria.png");
+        btnBandera.setBounds(310, 365, 200, 40);
+>>>>>>> origin/main
         btnBandera.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
@@ -273,8 +336,13 @@ public class VentanaMenuPrincipal extends JFrame {
         });
 
         // 📌 Botón 3: Siguiendo el Patrón
+<<<<<<< HEAD
         btnPatron = crearBotonConImagen("Recursos/Patron.png", 260, 50);
         btnPatron.setBounds(550, 410, 260, 50);
+=======
+        btnPatron = crearBotonConImagen("Recursos/Patron.png");
+        btnPatron.setBounds(310, 420, 200, 40);
+>>>>>>> origin/main
         btnPatron.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
@@ -284,8 +352,13 @@ public class VentanaMenuPrincipal extends JFrame {
         });
 
         // 📌 Botón 4: Control de Música / Silenciar
+<<<<<<< HEAD
         btnMusica = crearBotonConImagen("Recursos/Musica.png", 260, 50);
         btnMusica.setBounds(550, 470, 260, 50);
+=======
+        btnMusica = crearBotonConImagen("Recursos/Musica.png");
+        btnMusica.setBounds(310, 485, 200, 40);
+>>>>>>> origin/main
         btnMusica.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             alternarMusicaFondo();
@@ -299,6 +372,10 @@ public class VentanaMenuPrincipal extends JFrame {
         panelComponentesFlotantes.add(btnMusica);
 
         panelContenedorCapas.add(panelComponentesFlotantes);
+<<<<<<< HEAD
+=======
+        panelContenedorCapas.add(lblGif);
+>>>>>>> origin/main
 
         return panelContenedorCapas;
     }
@@ -323,7 +400,11 @@ public class VentanaMenuPrincipal extends JFrame {
         }
     }
 
+<<<<<<< HEAD
     private JButton crearBotonConImagen(String rutaImagen, int ancho, int alto) {
+=======
+    private JButton crearBotonConImagen(String rutaImagen) {
+>>>>>>> origin/main
         JButton boton = new JButton();
 
         URL urlImg = getClass().getClassLoader().getResource(rutaImagen);

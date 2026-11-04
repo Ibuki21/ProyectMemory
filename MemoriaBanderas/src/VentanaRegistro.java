@@ -22,68 +22,76 @@ public class VentanaRegistro extends JDialog {
         setLocationRelativeTo(parent);
         setResizable(false);
 
+        // Panel con fondo de imagen (heredado de VentanaLogin)
         VentanaLogin.PanelFondo panel = new VentanaLogin.PanelFondo("Recursos/Fondo1.jpg");
         panel.setLayout(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 4, 4, 4);
+        gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        // 🏷️ Título estilizado en blanco
         JLabel lblTitulo = new JLabel("REGISTRO DE NUEVO USUARIO");
-        lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 15));
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTitulo.setForeground(Color.WHITE);
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         panel.add(lblTitulo, gbc);
 
         gbc.gridwidth = 1;
 
-        // Campos de texto
-        gbc.gridx = 0; gbc.gridy = 1; panel.add(new JLabel("Nombre:"), gbc);
+        // Método auxiliar para crear etiquetas con texto blanco legible
+        // (Reemplaza la creación repetitiva y asegura que no haya fondos blancos)
+        gbc.gridx = 0; gbc.gridy = 1; panel.add(crearLabel("Nombre:"), gbc);
         txtNombre = new JTextField(16);
         gbc.gridx = 1; panel.add(txtNombre, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; panel.add(new JLabel("Apellidos:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 2; panel.add(crearLabel("Apellidos:"), gbc);
         txtApellidos = new JTextField(16);
         gbc.gridx = 1; panel.add(txtApellidos, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3; panel.add(new JLabel("Correo:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 3; panel.add(crearLabel("Correo:"), gbc);
         txtCorreo = new JTextField(16);
         gbc.gridx = 1; panel.add(txtCorreo, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4; panel.add(new JLabel("Usuario:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 4; panel.add(crearLabel("Usuario:"), gbc);
         txtUsuario = new JTextField(16);
         gbc.gridx = 1; panel.add(txtUsuario, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 5; panel.add(new JLabel("Contraseña:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 5; panel.add(crearLabel("Contraseña:"), gbc);
         txtPassword = new JPasswordField(16);
         gbc.gridx = 1; panel.add(txtPassword, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 6; panel.add(new JLabel("Confirmar Contraseña:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 6; panel.add(crearLabel("Confirmar Contraseña:"), gbc);
         txtConfirmarPassword = new JPasswordField(16);
         gbc.gridx = 1; panel.add(txtConfirmarPassword, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 7; panel.add(new JLabel("Fecha Nac. (DD/MM/AAAA):"), gbc);
+        gbc.gridx = 0; gbc.gridy = 7; panel.add(crearLabel("Fecha Nac. (DD/MM/AAAA):"), gbc);
         txtFechaNacimiento = new JTextField(16);
         gbc.gridx = 1; panel.add(txtFechaNacimiento, gbc);
 
         // Subida de Foto de Perfil
-        gbc.gridx = 0; gbc.gridy = 8; panel.add(new JLabel("Foto de Perfil:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 8; panel.add(crearLabel("Foto de Perfil:"), gbc);
 
+        // 🛡️ Panel transparente para la foto y botón (Evita el recuadro blanco)
         JPanel panelFoto = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         panelFoto.setOpaque(false);
+
         JButton btnCargarFoto = new JButton("Seleccionar...");
         lblVistaPreviaFoto = new JLabel("Sin foto");
+        lblVistaPreviaFoto.setForeground(Color.WHITE);
         lblVistaPreviaFoto.setPreferredSize(new Dimension(50, 50));
-        lblVistaPreviaFoto.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        lblVistaPreviaFoto.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         lblVistaPreviaFoto.setHorizontalAlignment(SwingConstants.CENTER);
 
         panelFoto.add(btnCargarFoto);
         panelFoto.add(lblVistaPreviaFoto);
         gbc.gridx = 1; panel.add(panelFoto, gbc);
 
-        // Botones guardar / cancelar
-        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // 🛡️ Panel de botones transparente (Evita el recuadro blanco inferior)
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         panelBotones.setOpaque(false);
+
         JButton btnRegistrar = new JButton("Registrar");
         JButton btnCancelar = new JButton("Cancelar");
         panelBotones.add(btnRegistrar);
@@ -98,6 +106,16 @@ public class VentanaRegistro extends JDialog {
         btnCargarFoto.addActionListener(e -> seleccionarFoto());
         btnRegistrar.addActionListener(e -> registrar());
         btnCancelar.addActionListener(e -> dispose());
+    }
+
+    /**
+     * Método auxiliar para crear etiquetas con fuente clara y legible sobre el fondo.
+     */
+    private JLabel crearLabel(String texto) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setForeground(Color.WHITE);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        return lbl;
     }
 
     private void seleccionarFoto() {

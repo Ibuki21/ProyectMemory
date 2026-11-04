@@ -192,11 +192,11 @@ public class VentanaMenuPrincipal extends JFrame {
         panelComponentesFlotantes.setOpaque(false);
         panelComponentesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
 
-        // 🏆 Tabla de Mejores Puntuaciones (Leaderboard Flotante con fondo translúcido integrado)
+        // 🏆 Tabla de Mejores Puntuaciones (Leaderboard transparente sin recuadro blanco)
         JPanel panelLeaderboard = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
-                g.setColor(new Color(15, 25, 45, 200)); // Azul oscuro translúcido
+                g.setColor(new Color(15, 25, 45, 180)); // Azul oscuro translúcido
                 g.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
                 super.paintComponent(g);
             }
@@ -221,32 +221,39 @@ public class VentanaMenuPrincipal extends JFrame {
         tablaPuntuaciones.setRowHeight(24);
         tablaPuntuaciones.getTableHeader().setReorderingAllowed(false);
 
-        // Estilos visuales de la tabla para fondo oscuro
-        tablaPuntuaciones.setBackground(new Color(20, 35, 60, 150));
+        // 🛡️ Propiedades clave para eliminar el fondo blanco de la tabla
+        tablaPuntuaciones.setOpaque(false);
         tablaPuntuaciones.setForeground(Color.WHITE);
-        tablaPuntuaciones.setSelectionBackground(new Color(70, 130, 180));
+        tablaPuntuaciones.setGridColor(new Color(50, 80, 120, 100));
+        tablaPuntuaciones.setSelectionBackground(new Color(70, 130, 180, 150));
         tablaPuntuaciones.setSelectionForeground(Color.WHITE);
-        tablaPuntuaciones.setGridColor(new Color(50, 80, 120));
 
+        // Estilo de la cabecera
         tablaPuntuaciones.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         tablaPuntuaciones.getTableHeader().setBackground(new Color(30, 50, 80));
         tablaPuntuaciones.getTableHeader().setForeground(Color.WHITE);
 
-        // Formato y centrado de columnas
+        // Formato y centrado transparente para las celdas
         tablaPuntuaciones.getColumnModel().getColumn(0).setPreferredWidth(35);
         tablaPuntuaciones.getColumnModel().getColumn(1).setPreferredWidth(130);
         tablaPuntuaciones.getColumnModel().getColumn(2).setPreferredWidth(60);
 
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        centerRenderer.setOpaque(false);
-        tablaPuntuaciones.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        tablaPuntuaciones.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+        DefaultTableCellRenderer renderizadorTransparente = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (c instanceof JLabel) {
+                    ((JLabel) c).setOpaque(false); // Fuerza transparencia en cada celda individual
+                    c.setForeground(Color.WHITE);
+                }
+                return c;
+            }
+        };
+        renderizadorTransparente.setHorizontalAlignment(SwingConstants.CENTER);
 
-        DefaultTableCellRenderer textRenderer = new DefaultTableCellRenderer();
-        textRenderer.setHorizontalAlignment(JLabel.LEFT);
-        textRenderer.setOpaque(false);
-        tablaPuntuaciones.getColumnModel().getColumn(1).setCellRenderer(textRenderer);
+        for (int i = 0; i < tablaPuntuaciones.getColumnCount(); i++) {
+            tablaPuntuaciones.getColumnModel().getColumn(i).setCellRenderer(renderizadorTransparente);
+        }
 
         JScrollPane scrollTabla = new JScrollPane(tablaPuntuaciones);
         scrollTabla.setOpaque(false);
@@ -254,7 +261,7 @@ public class VentanaMenuPrincipal extends JFrame {
         scrollTabla.setBorder(BorderFactory.createEmptyBorder());
         panelLeaderboard.add(scrollTabla, BorderLayout.CENTER);
 
-        // 📌 Botón 1: Iniciar Sesión (Más grandes: 260x50)
+        // 📌 Botón 1: Iniciar Sesión (Dimensiones 260x50)
         btnLogin = crearBotonConImagen("Recursos/Registro.png", 260, 50);
         btnLogin.setBounds(550, 290, 260, 50);
         btnLogin.addActionListener(e -> {

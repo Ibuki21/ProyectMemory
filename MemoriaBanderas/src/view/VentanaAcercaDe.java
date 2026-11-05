@@ -26,9 +26,9 @@ public class VentanaAcercaDe extends JDialog {
             "por definir"
     };
     private static final String[] RUTAS_FOTOS = {
-            "",   // Ibuki
+            "Recursos/fotosAbout/ipa.png",   // Ibuki
             "Recursos/fotosAbout/afc.png",   // Angel
-            ""    // Jorshan
+            "Recursos/fotosAbout/PD.jpg",   // Jorshan
     };
 
     public VentanaAcercaDe(Frame parent) {

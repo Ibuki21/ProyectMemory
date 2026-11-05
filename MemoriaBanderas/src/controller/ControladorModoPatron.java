@@ -206,6 +206,8 @@ public class ControladorModoPatron {
 
         if (actual != null) {
             actual.setPuntuacionMaxima(puntajeObtenido);
+            // Escribe el puntaje en usuarios.txt para que aparezca en la tabla de mejores jugadores
+            GestorUsuarios.actualizarPuntuacionUsuario(actual);
         }
 
         JOptionPane.showMessageDialog(vista,

@@ -1,3 +1,6 @@
+package view;
+import model.Usuario;
+import model.GestorUsuarios;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -14,6 +17,9 @@ public class VentanaRegistro extends JDialog {
     private JPasswordField txtConfirmarPassword;
     private JTextField txtFechaNacimiento;
     private JLabel lblVistaPreviaFoto;
+    private JButton btnCargarFoto;
+    private JButton btnRegistrar;
+    private JButton btnCancelar;
     private File archivoFotoSeleccionado;
 
     public VentanaRegistro(Window parent) {
@@ -22,7 +28,6 @@ public class VentanaRegistro extends JDialog {
         setLocationRelativeTo(parent);
         setResizable(false);
 
-        // Panel con fondo de imagen (heredado de VentanaLogin)
         VentanaLogin.PanelFondo panel = new VentanaLogin.PanelFondo("Recursos/Fondo1.jpg");
         panel.setLayout(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -30,7 +35,6 @@ public class VentanaRegistro extends JDialog {
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // 🏷️ Título estilizado en blanco
         JLabel lblTitulo = new JLabel("REGISTRO DE NUEVO USUARIO");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblTitulo.setForeground(Color.WHITE);
@@ -40,8 +44,6 @@ public class VentanaRegistro extends JDialog {
 
         gbc.gridwidth = 1;
 
-        // Método auxiliar para crear etiquetas con texto blanco legible
-        // (Reemplaza la creación repetitiva y asegura que no haya fondos blancos)
         gbc.gridx = 0; gbc.gridy = 1; panel.add(crearLabel("Nombre:"), gbc);
         txtNombre = new JTextField(16);
         gbc.gridx = 1; panel.add(txtNombre, gbc);
@@ -70,14 +72,12 @@ public class VentanaRegistro extends JDialog {
         txtFechaNacimiento = new JTextField(16);
         gbc.gridx = 1; panel.add(txtFechaNacimiento, gbc);
 
-        // Subida de Foto de Perfil
         gbc.gridx = 0; gbc.gridy = 8; panel.add(crearLabel("Foto de Perfil:"), gbc);
 
-        // 🛡️ Panel transparente para la foto y botón (Evita el recuadro blanco)
         JPanel panelFoto = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         panelFoto.setOpaque(false);
 
-        JButton btnCargarFoto = new JButton("Seleccionar...");
+        btnCargarFoto = new JButton("Seleccionar...");
         lblVistaPreviaFoto = new JLabel("Sin foto");
         lblVistaPreviaFoto.setForeground(Color.WHITE);
         lblVistaPreviaFoto.setPreferredSize(new Dimension(50, 50));
@@ -88,12 +88,11 @@ public class VentanaRegistro extends JDialog {
         panelFoto.add(lblVistaPreviaFoto);
         gbc.gridx = 1; panel.add(panelFoto, gbc);
 
-        // 🛡️ Panel de botones transparente (Evita el recuadro blanco inferior)
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         panelBotones.setOpaque(false);
 
-        JButton btnRegistrar = new JButton("Registrar");
-        JButton btnCancelar = new JButton("Cancelar");
+        btnRegistrar = new JButton("Registrar");
+        btnCancelar = new JButton("Cancelar");
         panelBotones.add(btnRegistrar);
         panelBotones.add(btnCancelar);
 
@@ -101,16 +100,8 @@ public class VentanaRegistro extends JDialog {
         panel.add(panelBotones, gbc);
 
         add(panel);
-
-        // Eventos
-        btnCargarFoto.addActionListener(e -> seleccionarFoto());
-        btnRegistrar.addActionListener(e -> registrar());
-        btnCancelar.addActionListener(e -> dispose());
     }
 
-    /**
-     * Método auxiliar para crear etiquetas con fuente clara y legible sobre el fondo.
-     */
     private JLabel crearLabel(String texto) {
         JLabel lbl = new JLabel(texto);
         lbl.setForeground(Color.WHITE);
@@ -118,50 +109,18 @@ public class VentanaRegistro extends JDialog {
         return lbl;
     }
 
-    private void seleccionarFoto() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Seleccionar Foto de Perfil");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Imágenes (JPG, PNG)", "jpg", "jpeg", "png"));
-        int seleccion = fileChooser.showOpenDialog(this);
-        if (seleccion == JFileChooser.APPROVE_OPTION) {
-            archivoFotoSeleccionado = fileChooser.getSelectedFile();
-            ImageIcon iconoOriginal = new ImageIcon(archivoFotoSeleccionado.getAbsolutePath());
-            Image imgEscalada = iconoOriginal.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
-            lblVistaPreviaFoto.setIcon(new ImageIcon(imgEscalada));
-            lblVistaPreviaFoto.setText("");
-        }
-    }
-
-    private void registrar() {
-        String nombre = txtNombre.getText().trim();
-        String apellidos = txtApellidos.getText().trim();
-        String correo = txtCorreo.getText().trim();
-        String usuario = txtUsuario.getText().trim();
-        String password = new String(txtPassword.getPassword());
-        String confirmarPass = new String(txtConfirmarPassword.getPassword());
-        String fechaNac = txtFechaNacimiento.getText().trim();
-
-        if (nombre.isEmpty() || apellidos.isEmpty() || correo.isEmpty() || usuario.isEmpty() || password.isEmpty() || fechaNac.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor complete todos los campos obligatorios.", "Atención", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        if (!Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-zA-Z]{2,}$", correo)) {
-            JOptionPane.showMessageDialog(this, "El correo electrónico no tiene un formato válido.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (!password.equals(confirmarPass)) {
-            JOptionPane.showMessageDialog(this, "Las contraseñas no coinciden.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        Usuario nuevoUsuario = new Usuario(nombre, apellidos, correo, usuario, password, fechaNac, archivoFotoSeleccionado);
-        if (GestorUsuarios.registrarUsuario(nuevoUsuario)) {
-            JOptionPane.showMessageDialog(this, "¡Registro realizado con éxito! Ahora puede iniciar sesión.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            dispose();
-        } else {
-            JOptionPane.showMessageDialog(this, "El correo o nombre de usuario ya se encuentra registrado.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
+    // Getters y Setters para el Controlador
+    public JTextField getTxtNombre() { return txtNombre; }
+    public JTextField getTxtApellidos() { return txtApellidos; }
+    public JTextField getTxtCorreo() { return txtCorreo; }
+    public JTextField getTxtUsuario() { return txtUsuario; }
+    public JPasswordField getTxtPassword() { return txtPassword; }
+    public JPasswordField getTxtConfirmarPassword() { return txtConfirmarPassword; }
+    public JTextField getTxtFechaNacimiento() { return txtFechaNacimiento; }
+    public JLabel getLblVistaPreviaFoto() { return lblVistaPreviaFoto; }
+    public JButton getBtnCargarFoto() { return btnCargarFoto; }
+    public JButton getBtnRegistrar() { return btnRegistrar; }
+    public JButton getBtnCancelar() { return btnCancelar; }
+    public File getArchivoFotoSeleccionado() { return archivoFotoSeleccionado; }
+    public void setArchivoFotoSeleccionado(File archivoFotoSeleccionado) { this.archivoFotoSeleccionado = archivoFotoSeleccionado; }
 }

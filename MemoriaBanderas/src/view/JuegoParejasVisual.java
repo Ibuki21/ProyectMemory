@@ -1,3 +1,5 @@
+package view;
+import controller.ControladorJuegoParejas;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;

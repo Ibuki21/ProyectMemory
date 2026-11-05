@@ -1,9 +1,13 @@
+package controller;
+
+import model.LogicaPatron;
+import model.Usuario;
+import model.GestorUsuarios;
+import view.VentanaModoPatron;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
+import javax.sound.sampled.*;
 import java.net.URL;
 
 /**

@@ -1,3 +1,6 @@
+package view;
+import model.ConstructorFichas;
+
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;

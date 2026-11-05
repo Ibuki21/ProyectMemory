@@ -1,14 +1,14 @@
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
+package view;
+
+import model.Usuario;
+import model.GestorUsuarios;
+import controller.ControladorLogin;
+import controller.ControladorModoPatron;
+import javax.sound.sampled.*;
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.net.URL;
 import java.util.List;
 
@@ -267,6 +267,7 @@ public class VentanaMenuPrincipal extends JFrame {
         btnLogin.addActionListener(e -> {
             reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaLogin loginDialog = new VentanaLogin(this);
+            new ControladorLogin(loginDialog); // Instancia del controlador MVC
             loginDialog.setVisible(true);
         });
 

@@ -9,7 +9,7 @@ public class JuegoParejasLogica {
     private static final int TOTAL_PARES = 10;
 
     private String[] codigosBase = {
-            "cafe", "Estrella", "Fresa", "Gato", "Honguitos",
+            "Cafe", "Estrella", "Fresa", "Gato", "Honguitos",
             "Manzanas", "Moneda", "Reloj", "Sombrero", "Vela"
     };
 

@@ -27,6 +27,9 @@ public class VentanaMenuPrincipal extends JFrame {
     private JButton btnBandera;
     private JButton btnPatron;
     private JButton btnMusica;
+    private JMenuBar barraMenu;
+    private JMenuItem itemAcercaDe;
+    private JMenuItem itemCerrarSesion;
     private DefaultTableModel modeloTabla;
     private JTable tablaPuntuaciones;
 
@@ -38,8 +41,13 @@ public class VentanaMenuPrincipal extends JFrame {
         setTitle("Menú Principal - Juegos de Memoria y Banderas");
         setSize(ANCHO_VENTANA, ALTO_VENTANA);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
         setResizable(true); // Permitir redimensionar para habilitar el botón de maximizar
+
+        // Barra de menú superior: Ayuda a la izquierda y Cerrar sesión a la derecha
+        crearBarraMenu();
+        // La barra ocupa espacio, se suma su alto para conservar el área útil del menú
+        setSize(ANCHO_VENTANA, ALTO_VENTANA + barraMenu.getPreferredSize().height);
+        setLocationRelativeTo(null);
 
         // 🎵 Iniciar música de fondo al abrir
         reproducirMusicaFondo("Recursos/Cancion/8 bits.wav");
@@ -98,6 +106,44 @@ public class VentanaMenuPrincipal extends JFrame {
 
         // Cargar puntuaciones iniciales
         actualizarTablaPuntuaciones();
+    }
+
+    // Crea la barra de menú superior: el menú Ayuda (con Acerca de) queda a la izquierda
+    // y la opción Cerrar sesión queda en la esquina derecha.
+    private void crearBarraMenu() {
+        barraMenu = new JMenuBar();
+
+        JMenu menuAyuda = new JMenu("Ayuda");
+        itemAcercaDe = new JMenuItem("Acerca de");
+        itemAcercaDe.addActionListener(e -> {
+            VentanaAcercaDe acercaDe = new VentanaAcercaDe(this);
+            acercaDe.setVisible(true);
+        });
+        menuAyuda.add(itemAcercaDe);
+
+        itemCerrarSesion = new JMenuItem("Cerrar sesión");
+        itemCerrarSesion.addActionListener(e -> cerrarSesion());
+        // Evita que la opción se estire y se separe de la esquina derecha
+        itemCerrarSesion.setMaximumSize(itemCerrarSesion.getPreferredSize());
+
+        barraMenu.add(menuAyuda);
+        barraMenu.add(Box.createHorizontalGlue()); // Empuja lo que sigue a la esquina derecha
+        barraMenu.add(itemCerrarSesion);
+
+        setJMenuBar(barraMenu);
+    }
+
+    // Cierra la sesión actual. Sin usuario en sesión, el modo patrones no guarda ningún puntaje.
+    private void cerrarSesion() {
+        Usuario actual = GestorUsuarios.getUsuarioSesionActual();
+        if (actual == null) {
+            JOptionPane.showMessageDialog(this, "No hay ninguna sesión abierta.",
+                    "Cerrar sesión", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        GestorUsuarios.cerrarSesion();
+        JOptionPane.showMessageDialog(this, "Sesión cerrada. Hasta pronto, " + actual.getNombre() + ".",
+                "Cerrar sesión", JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
@@ -413,4 +459,6 @@ public class VentanaMenuPrincipal extends JFrame {
     public JButton getBtnBandera() { return btnBandera; }
     public JButton getBtnPatron() { return btnPatron; }
     public JButton getBtnMusica() { return btnMusica; }
+    public JMenuItem getItemAcercaDe() { return itemAcercaDe; }
+    public JMenuItem getItemCerrarSesion() { return itemCerrarSesion; }
 }

@@ -19,6 +19,18 @@ public class VentanaMenuPrincipal extends JFrame {
 
     private JPanel panelContenedor;
     private Timer timerTransicion;
+    private Timer timerParpadeo;
+    private boolean introActiva = true;
+    private boolean avisoSaltarVisible = true;
+
+    // Cualquier tecla presionada durante la intro la salta. No consume la tecla,
+    // así F11 y las demás teclas siguen funcionando igual.
+    private final KeyEventDispatcher despachadorTeclasIntro = e -> {
+        if (introActiva && e.getID() == KeyEvent.KEY_PRESSED && isActive()) {
+            SwingUtilities.invokeLater(this::terminarIntro);
+        }
+        return false;
+    };
     private Clip clipMusicaFondo;
     private boolean musicaActiva = true;
 
@@ -71,12 +83,17 @@ public class VentanaMenuPrincipal extends JFrame {
         // ⏱️ Duración de la intro en milisegundos (25 segundos)
         int duracionIntroMillis = 25000;
 
-        timerTransicion = new Timer(duracionIntroMillis, e -> {
-            cl.show(panelContenedor, "MENU");
-            timerTransicion.stop();
-        });
+        timerTransicion = new Timer(duracionIntroMillis, e -> terminarIntro());
         timerTransicion.setRepeats(false);
         timerTransicion.start();
+
+        // Aviso parpadeante para saltar la intro con cualquier tecla
+        timerParpadeo = new Timer(600, e -> {
+            avisoSaltarVisible = !avisoSaltarVisible;
+            panelContenedor.repaint();
+        });
+        timerParpadeo.start();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(despachadorTeclasIntro);
 
         // ⌨️ Escucha global de teclado para alternar pantalla completa con F11 o salir con ESC
         addKeyListener(new KeyAdapter() {
@@ -106,6 +123,19 @@ public class VentanaMenuPrincipal extends JFrame {
 
         // Cargar puntuaciones iniciales
         actualizarTablaPuntuaciones();
+    }
+
+    // Termina la intro (por tiempo o por tecla) y muestra el menú interactivo
+    private void terminarIntro() {
+        if (!introActiva) {
+            return;
+        }
+        introActiva = false;
+        timerTransicion.stop();
+        timerParpadeo.stop();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(despachadorTeclasIntro);
+        ((CardLayout) panelContenedor.getLayout()).show(panelContenedor, "MENU");
+        requestFocus(); // Conserva el foco para seguir capturando F11 y ESC
     }
 
     // Crea la barra de menú superior: el menú Ayuda (con Acerca de) queda a la izquierda
@@ -207,6 +237,22 @@ public class VentanaMenuPrincipal extends JFrame {
 
                         g.drawImage(imagen, x, y, nuevoAncho, nuevoAlto, this);
                     }
+                }
+
+                // Aviso parpadeante en la parte superior, solo letras sin recuadro
+                if (introActiva && avisoSaltarVisible) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                    String texto = "Presiona cualquier tecla para saltar";
+                    FontMetrics fm = g2.getFontMetrics();
+                    int textoX = (getWidth() - fm.stringWidth(texto)) / 2;
+                    int textoY = 40;
+                    g2.setColor(new Color(0, 0, 0, 170)); // Sombra para que se lea sobre el video
+                    g2.drawString(texto, textoX + 2, textoY + 2);
+                    g2.setColor(Color.WHITE);
+                    g2.drawString(texto, textoX, textoY);
+                    g2.dispose();
                 }
             }
         };

@@ -7,8 +7,8 @@ import java.time.format.DateTimeFormatter;
 
 public class BccrApiClient {
     public static void main(String[] args) {
-        String token = "token";
-        String email = "correo";
+        String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJCQ0NSLVNEREUiLCJzdWIiOiJhYmF0aC5mYWxsYXNAb3V0bG9vay5jb20iLCJhdWQiOiJTRERFLVNpdGlvRXh0ZXJubyIsImV4cCI6MjUzNDAyMzAwODAwLCJuYmYiOjE3OTMyODQ0NzMsImlhdCI6MTc5MzI4NDQ3MywianRpIjoiZDJkOTYyOWItODJjNi00NDQ4LWEwMjYtYzRlMDEyN2YwNTdiIiwiZW1haWwiOiJhYmF0aC5mYWxsYXNAb3V0bG9vay5jb20ifQ.zm1TmrMtvf0UM4kgILkLP-0QXE3U5bApsqmEJjQjcbQ";
+        String email = "abath.fallas@outlook.com";
 
         DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy/MM/dd");
         String hasta = LocalDate.now().format(f);

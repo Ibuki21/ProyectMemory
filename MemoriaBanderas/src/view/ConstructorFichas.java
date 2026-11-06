@@ -1,18 +1,15 @@
-package model;
-import javax.sound.sampled.*;
+package view;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import javax.imageio.ImageIO;
 
-// Construye las fichas (casillas) del Modo Patrones con soporte de sonido integrado.
+// Construye las fichas (casillas) del Modo Patrones. El sonido de clic lo maneja el controlador.
 public class ConstructorFichas {
 
     private static final String RUTA_BANDERAS = "Recursos/w320/";
-    private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
 
     // Tamaño de la casilla y de la bandera (proporción 3:2, ajustada a la casilla)
     private static final int ANCHO_FICHA = 80;
@@ -57,30 +54,7 @@ public class ConstructorFichas {
         ficha.setPreferredSize(new Dimension(ANCHO_FICHA, ALTO_FICHA));
         ficha.setFocusPainted(false);
 
-        // 🎵 Añadir sonido de clic a CADA botón de forma universal
-        ficha.addActionListener(e -> reproducirEfectoSonido(RUTA_AUDIO_CLICK));
-
         return ficha;
-    }
-
-    // Método auxiliar para reproducir el efecto de sonido sin bloquear el hilo EDT
-    private static void reproducirEfectoSonido(String rutaAudio) {
-        // Usamos un hilo ligero (o ejecución directa rápida) para evitar retrasos al hacer clic
-        new Thread(() -> {
-            try {
-                URL urlAudio = ConstructorFichas.class.getClassLoader().getResource(rutaAudio);
-                if (urlAudio != null) {
-                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlAudio);
-                    Clip clipClick = AudioSystem.getClip();
-                    clipClick.open(audioStream);
-                    clipClick.start();
-                } else {
-                    System.err.println("No se encontró el audio de clic: " + rutaAudio);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
     }
 
     // Carga una bandera desde los recursos internos usando InputStream

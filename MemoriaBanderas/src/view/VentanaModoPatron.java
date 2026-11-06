@@ -1,5 +1,4 @@
 package view;
-import model.ConstructorFichas;
 
 import javax.swing.*;
 import java.awt.*;

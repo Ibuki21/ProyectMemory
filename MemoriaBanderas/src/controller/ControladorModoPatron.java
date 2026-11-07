@@ -7,8 +7,6 @@ import view.VentanaModoPatron;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javax.sound.sampled.*;
-import java.net.URL;
 
 /**
  * Controlador del Modo Patrones.
@@ -128,7 +126,7 @@ public class ControladorModoPatron {
         }
 
         // 🎵 Reproducir el sonido de clic al presionar cualquier casilla durante el turno del jugador
-        reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+        ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
 
         if (!logica.validarCasilla(fila, columna)) {
             terminarJuego("¡Casilla incorrecta!");
@@ -153,23 +151,6 @@ public class ControladorModoPatron {
             timerPausa.start();
         } else {
             reiniciarTimerEntreCasillas();
-        }
-    }
-
-    // Método auxiliar para reproducir efectos de sonido
-    private void reproducirEfectoSonido(String rutaAudio) {
-        try {
-            URL urlAudio = getClass().getClassLoader().getResource(rutaAudio);
-            if (urlAudio != null) {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlAudio);
-                Clip clipClick = AudioSystem.getClip();
-                clipClick.open(audioStream);
-                clipClick.start();
-            } else {
-                System.err.println("No se encontró el archivo de audio: " + rutaAudio);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

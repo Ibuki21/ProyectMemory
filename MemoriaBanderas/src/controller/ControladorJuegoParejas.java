@@ -1,13 +1,15 @@
 package controller;
+
 import model.JuegoParejasLogica;
 import view.JuegoParejasVisual;
-import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
-import java.net.URL;
 import javax.imageio.ImageIO;
+import java.net.URL;
 
 public class ControladorJuegoParejas {
 
@@ -18,103 +20,292 @@ public class ControladorJuegoParejas {
     private static final String RUTA_PAREJAS = "Recursos/Parejas/";
     private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
 
-    private boolean bloqueandoClics1 = false;
-    private boolean bloqueandoClics2 = false;
+    private static final int TICK_MS = 100;
+    private static final int TIEMPO_TURNO = 100;
+    private static final int TIEMPO_EXTRA = 70;
+    private static final int TIEMPO_MEMORIA = 50;
+
+    private boolean bloqueandoClics = true;
+    private boolean faseDeMemoria = true;
+    private boolean juegoTerminado = false;
+    private int jugadorActual = 1;
+    private int tiempoRestante;
+    private int partida = 0;
+    private Timer timerTurno;
+    private Timer timerMemoria;
 
     public ControladorJuegoParejas(JuegoParejasVisual vista) {
         this.vista = vista;
-        this.logica1 = new JuegoParejasLogica(); // Lógica independiente para el Tablero 1
-        this.logica2 = new JuegoParejasLogica(); // Lógica independiente para el Tablero 2 (patrón distinto)
+        this.logica1 = new JuegoParejasLogica();
+        this.logica2 = new JuegoParejasLogica();
 
         inicializarEventos();
-        actualizarVistaTablero(1);
-        actualizarVistaTablero(2);
+
+        vista.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                if (timerTurno != null) timerTurno.stop();
+                if (timerMemoria != null) timerMemoria.stop();
+            }
+        });
+
+        iniciarFaseMemoria();
     }
 
     private void inicializarEventos() {
         int filas = vista.getFilas();
         int columnas = vista.getColumnas();
 
-        // Eventos Tablero 1
         JButton[][] botones1 = vista.getBotonesTablero1();
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
                 final int indice = i * columnas + j;
-                botones1[i][j].addActionListener(e -> {
-                    if (bloqueandoClics1) return;
-                    manejarClicTablero(1, indice);
-                });
+                botones1[i][j].addActionListener(e -> manejarClicTablero(1, indice));
             }
         }
 
-        // Eventos Tablero 2
         JButton[][] botones2 = vista.getBotonesTablero2();
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
                 final int indice = i * columnas + j;
-                botones2[i][j].addActionListener(e -> {
-                    if (bloqueandoClics2) return;
-                    manejarClicTablero(2, indice);
-                });
+                botones2[i][j].addActionListener(e -> manejarClicTablero(2, indice));
             }
         }
 
-        // Botón Reiniciar Ambos
+        // Botón Reiniciar Ambos Tableros
         vista.getBtnReiniciar().addActionListener(e -> {
-            reproducirSonido(RUTA_AUDIO_CLICK);
+            ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+            partida++;
+            if (timerTurno != null) timerTurno.stop();
+            if (timerMemoria != null) timerMemoria.stop();
+
+            juegoTerminado = false;
             logica1.reiniciarJuego();
             logica2.reiniciarJuego();
-            actualizarVistaTablero(1);
-            actualizarVistaTablero(2);
+
             vista.getLblIntentos1().setText("Intentos: 0");
-            vista.getLblPares1().setText("Pares: 0 / 10");
+            vista.getLblPares1().setText("Pares: 0 / 18");
             vista.getLblIntentos2().setText("Intentos: 0");
-            vista.getLblPares2().setText("Pares: 0 / 10");
+            vista.getLblPares2().setText("Pares: 0 / 18");
+
+            // Restaura las cuadrículas eliminando los GIFs y volviendo a colocar los botones con nuevo orden
+            vista.restaurarGridTablero(1);
+            vista.restaurarGridTablero(2);
+
+            iniciarFaseMemoria();
         });
     }
 
+    private void iniciarFaseMemoria() {
+        faseDeMemoria = true;
+        bloqueandoClics = true;
+        vista.marcarTableroActivo(1);
+        vista.getLblTurno().setText("¡MEMORICEN LAS CARTAS (5s)!");
+
+        actualizarVistaTablero(1);
+        actualizarVistaTablero(2);
+
+        tiempoRestante = TIEMPO_MEMORIA;
+        vista.getBarraTiempo().setMaximum(TIEMPO_MEMORIA);
+        actualizarBarraTiempoMemoria();
+
+        timerMemoria = new Timer(TICK_MS, e -> {
+            tiempoRestante--;
+            actualizarBarraTiempoMemoria();
+            if (tiempoRestante <= 0) {
+                timerMemoria.stop();
+                faseDeMemoria = false;
+                bloqueandoClics = false;
+                actualizarVistaTablero(1);
+                actualizarVistaTablero(2);
+                iniciarTurno(1);
+            }
+        });
+        timerMemoria.start();
+    }
+
+    private void actualizarBarraTiempoMemoria() {
+        int decimas = Math.max(tiempoRestante, 0);
+        vista.getBarraTiempo().setValue(decimas);
+        vista.getBarraTiempo().setString(String.format("Memorizando: %.1f s", decimas / 10.0));
+    }
+
+    private JuegoParejasLogica logicaDe(int jugador) {
+        return (jugador == 1) ? logica1 : logica2;
+    }
+
+    private void iniciarTurno(int jugador) {
+        if (juegoTerminado) return;
+        jugadorActual = jugador;
+        tiempoRestante = TIEMPO_TURNO;
+        vista.marcarTableroActivo(jugador);
+        vista.getLblTurno().setText("Turno: Jugador " + jugador);
+        vista.getBarraTiempo().setMaximum(TIEMPO_TURNO);
+        actualizarBarraTiempoTurno();
+
+        if (timerTurno == null) {
+            timerTurno = new Timer(TICK_MS, e -> alPasarTiempo());
+        }
+        timerTurno.restart();
+    }
+
+    private void cambiarTurno() {
+        if (juegoTerminado) return;
+        int siguiente = (jugadorActual == 1) ? 2 : 1;
+        if (logicaDe(siguiente).haGanado()) {
+            siguiente = jugadorActual;
+        }
+        iniciarTurno(siguiente);
+    }
+
+    private void alPasarTiempo() {
+        if (bloqueandoClics || faseDeMemoria || juegoTerminado) {
+            return;
+        }
+        tiempoRestante--;
+        actualizarBarraTiempoTurno();
+        if (tiempoRestante <= 0) {
+            logicaDe(jugadorActual).cancelarSeleccionPendiente();
+            actualizarVistaTablero(jugadorActual);
+            cambiarTurno();
+        }
+    }
+
+    private void actualizarBarraTiempoTurno() {
+        int decimas = Math.max(tiempoRestante, 0);
+        if (decimas > vista.getBarraTiempo().getMaximum()) {
+            vista.getBarraTiempo().setMaximum(decimas);
+        }
+        vista.getBarraTiempo().setValue(decimas);
+        vista.getBarraTiempo().setString(String.format("Tiempo: %.1f s", decimas / 10.0));
+    }
+
     private void manejarClicTablero(int numTablero, int indice) {
-        JuegoParejasLogica logicaActiva = (numTablero == 1) ? logica1 : logica2;
+        if (juegoTerminado || bloqueandoClics || faseDeMemoria || numTablero != jugadorActual) return;
+
+        JuegoParejasLogica logicaActiva = logicaDe(numTablero);
         if (logicaActiva.estaRevelada(indice)) return;
 
-        reproducirSonido(RUTA_AUDIO_CLICK);
+        ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
 
         if (!logicaActiva.seleccionarCarta(indice)) return;
 
         actualizarVistaTablero(numTablero);
 
         if (logicaActiva.getIndiceSegundaSeleccion() != -1) {
-            if (numTablero == 1) bloqueandoClics1 = true;
-            else bloqueandoClics2 = true;
+            bloqueandoClics = true;
+            final int partidaActual = partida;
 
             Timer timer = new Timer(750, ae -> {
-                if (logicaActiva.evaluarPareja()) {
-                    if (logicaActiva.haGanado()) {
-                        JOptionPane.showMessageDialog(vista,
-                                "¡Felicidades! Has completado el Tablero " + numTablero + " en " + logicaActiva.getIntentos() + " intentos.",
-                                "¡Victoria en Tablero " + numTablero + "!", JOptionPane.INFORMATION_MESSAGE);
-                    }
-                } else {
+                if (partidaActual != partida || juegoTerminado) return;
+
+                boolean acierto = logicaActiva.evaluarPareja();
+                if (!acierto) {
                     logicaActiva.ocultarSeleccionFallida();
                 }
 
                 actualizarVistaTablero(numTablero);
-                if (numTablero == 1) {
-                    vista.getLblIntentos1().setText("Intentos: " + logicaActiva.getIntentos());
-                    vista.getLblPares1().setText("Pares: " + logicaActiva.getParesEncontrados() + " / 10");
-                    bloqueandoClics1 = false;
-                } else {
-                    vista.getLblIntentos2().setText("Intentos: " + logicaActiva.getIntentos());
-                    vista.getLblPares2().setText("Pares: " + logicaActiva.getParesEncontrados() + " / 10");
-                    bloqueandoClics2 = false;
-                }
+                actualizarEstadisticas(numTablero);
+                bloqueandoClics = false;
+                resolverJugada(numTablero, acierto);
             });
             timer.setRepeats(false);
             timer.start();
         }
     }
 
+    private void resolverJugada(int numTablero, boolean acierto) {
+        if (logica1.haGanado() || logica2.haGanado()) {
+            verificarFinPartidaDual();
+        } else if (acierto) {
+            tiempoRestante += TIEMPO_EXTRA;
+            actualizarBarraTiempoTurno();
+        } else {
+            cambiarTurno();
+        }
+    }
+
+    private void actualizarEstadisticas(int numTablero) {
+        JuegoParejasLogica logicaActiva = logicaDe(numTablero);
+        JLabel lblIntentos = (numTablero == 1) ? vista.getLblIntentos1() : vista.getLblIntentos2();
+        JLabel lblPares = (numTablero == 1) ? vista.getLblPares1() : vista.getLblPares2();
+        lblIntentos.setText("Intentos: " + logicaActiva.getIntentos());
+        lblPares.setText("Pares: " + logicaActiva.getParesEncontrados() + " / 18");
+    }
+
+    private void verificarFinPartidaDual() {
+        boolean gano1 = logica1.haGanado();
+        boolean gano2 = logica2.haGanado();
+
+        if (gano1 || gano2) {
+            if (gano1 && gano2) {
+                terminarJuegoCompleto();
+            } else if (gano1) {
+                juegoTerminado = true;
+                if (timerTurno != null) timerTurno.stop();
+
+                cargarGifEnTablero(1, true);  // Carga Victoria.gif[cite: 1]
+                cargarGifEnTablero(2, false); // Carga Derrota.gif[cite: 1]
+
+                vista.getLblTurno().setText("¡Jugador 1 completó su tablero primero!");
+                JOptionPane.showMessageDialog(vista, "¡El Jugador 1 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
+            } else if (gano2) {
+                juegoTerminado = true;
+                if (timerTurno != null) timerTurno.stop();
+
+                cargarGifEnTablero(2, true);  // Carga Victoria.gif[cite: 1]
+                cargarGifEnTablero(1, false); // Carga Derrota.gif[cite: 1]
+
+                vista.getLblTurno().setText("¡Jugador 2 completó su tablero primero!");
+                JOptionPane.showMessageDialog(vista, "¡El Jugador 2 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+    }
+
+    private void terminarJuegoCompleto() {
+        juegoTerminado = true;
+        if (timerTurno != null) timerTurno.stop();
+
+        int intentos1 = logica1.getIntentos();
+        int intentos2 = logica2.getIntentos();
+
+        if (intentos1 < intentos2) {
+            cargarGifEnTablero(1, true);
+            cargarGifEnTablero(2, false);
+        } else if (intentos2 < intentos1) {
+            cargarGifEnTablero(2, true);
+            cargarGifEnTablero(1, false);
+        } else {
+            cargarGifEnTablero(1, true);
+            cargarGifEnTablero(2, true);
+        }
+
+        vista.getLblTurno().setText("¡Partida Finalizada!");
+        JOptionPane.showMessageDialog(vista,
+                "¡Ambos tableros completados!\nJugador 1: " + intentos1 + " intentos\nJugador 2: " + intentos2 + " intentos",
+                "Fin del juego", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void cargarGifEnTablero(int numTablero, boolean esVictoria) {
+        // Rutas exactas basadas en tu estructura:
+        // Victoria -> Recursos/Cancion/Ganaste/Victoria.gif[cite: 1]
+        // Derrota -> Recursos/Cancion/Perdiste/Derrota.gif[cite: 1]
+        String rutaGif = esVictoria ?
+                "Recursos/Cancion/Ganaste/Victoria.gif" :
+                "Recursos/Cancion/Perdiste/Derrota.gif";
+
+        URL urlGif = getClass().getClassLoader().getResource(rutaGif);
+        if (urlGif != null) {
+            ImageIcon iconoGif = new ImageIcon(urlGif);
+            vista.mostrarGifEnTablero(numTablero, iconoGif);
+        } else {
+            System.err.println("No se encontró el GIF en la ruta exacta: " + rutaGif);
+        }
+    }
+
     private void actualizarVistaTablero(int numTablero) {
+        if (juegoTerminado) return;
+
         JuegoParejasLogica logicaActiva = (numTablero == 1) ? logica1 : logica2;
         JButton[][] botones = (numTablero == 1) ? vista.getBotonesTablero1() : vista.getBotonesTablero2();
         int filas = vista.getFilas();
@@ -125,9 +316,9 @@ public class ControladorJuegoParejas {
                 int indice = i * columnas + j;
                 JButton btn = botones[i][j];
 
-                if (logicaActiva.estaRevelada(indice) || estaTemporalmenteVolteada(logicaActiva, indice)) {
+                if (faseDeMemoria || logicaActiva.estaRevelada(indice) || estaTemporalmenteVolteada(logicaActiva, indice)) {
                     String nombreArchivo = logicaActiva.getCodigoCarta(indice);
-                    ImageIcon icono = cargarImagenEscalada(nombreArchivo, 85, 75);
+                    ImageIcon icono = cargarImagenEscalada(nombreArchivo, 55, 55);
                     if (icono != null) {
                         btn.setIcon(icono);
                         btn.setText("");
@@ -139,7 +330,7 @@ public class ControladorJuegoParejas {
                 } else {
                     btn.setIcon(null);
                     btn.setText("❓");
-                    btn.setFont(new Font("Segoe UI", Font.BOLD, 22));
+                    btn.setFont(new Font("Segoe UI", Font.BOLD, 18));
                     btn.setForeground(Color.WHITE);
                     btn.setBackground(new Color(30, 50, 80));
                 }
@@ -187,21 +378,5 @@ public class ControladorJuegoParejas {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    private void reproducirSonido(String rutaAudio) {
-        new Thread(() -> {
-            try {
-                URL urlAudio = getClass().getClassLoader().getResource(rutaAudio);
-                if (urlAudio != null) {
-                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlAudio);
-                    Clip clip = AudioSystem.getClip();
-                    clip.open(audioStream);
-                    clip.start();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
     }
 }

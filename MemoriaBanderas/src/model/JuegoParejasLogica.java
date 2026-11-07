@@ -90,6 +90,14 @@ public class JuegoParejasLogica {
         }
     }
 
+    // Oculta la carta que quedó volteada sin pareja (por ejemplo, cuando se acaba el tiempo del turno)
+    public void cancelarSeleccionPendiente() {
+        if (indicePrimeraSeleccion != -1 && indiceSegundaSeleccion == -1) {
+            cartasActualmenteVolteadas[indicePrimeraSeleccion] = false;
+            indicePrimeraSeleccion = -1;
+        }
+    }
+
     private void limpiarSeleccionTemporal() {
         indicePrimeraSeleccion = -1;
         indiceSegundaSeleccion = -1;

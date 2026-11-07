@@ -4,6 +4,7 @@ import model.Usuario;
 import model.GestorUsuarios;
 import controller.ControladorLogin;
 import controller.ControladorModoPatron;
+import controller.ReproductorSonido;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -357,7 +358,7 @@ public class VentanaMenuPrincipal extends JFrame {
         btnLogin = crearBotonConImagen("Recursos/Registro.png", 260, 50);
         btnLogin.setBounds(550, 290, 260, 50);
         btnLogin.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaLogin loginDialog = new VentanaLogin(this);
             new ControladorLogin(loginDialog); // Instancia del controlador MVC
             loginDialog.setVisible(true);
@@ -367,7 +368,7 @@ public class VentanaMenuPrincipal extends JFrame {
         btnBandera = crearBotonConImagen("Recursos/Memoria.png", 260, 50);
         btnBandera.setBounds(550, 350, 260, 50);
         btnBandera.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
             ventanaParejas.setVisible(true);
         });
@@ -376,7 +377,7 @@ public class VentanaMenuPrincipal extends JFrame {
         btnPatron = crearBotonConImagen("Recursos/Patron.png", 260, 50);
         btnPatron.setBounds(550, 410, 260, 50);
         btnPatron.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
             ControladorModoPatron controlador = new ControladorModoPatron(ventanaPatron);
             ventanaPatron.setVisible(true);
@@ -387,7 +388,7 @@ public class VentanaMenuPrincipal extends JFrame {
         btnMusica = crearBotonConImagen("Recursos/Musica.png", 260, 50);
         btnMusica.setBounds(550, 470, 260, 50);
         btnMusica.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             alternarMusicaFondo();
         });
 
@@ -457,20 +458,6 @@ public class VentanaMenuPrincipal extends JFrame {
                 clipMusicaFondo.open(audioStream);
                 clipMusicaFondo.loop(Clip.LOOP_CONTINUOUSLY);
                 clipMusicaFondo.start();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void reproducirEfectoSonido(String rutaAudio) {
-        try {
-            URL urlAudio = getClass().getClassLoader().getResource(rutaAudio);
-            if (urlAudio != null) {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlAudio);
-                Clip clipClick = AudioSystem.getClip();
-                clipClick.open(audioStream);
-                clipClick.start();
             }
         } catch (Exception e) {
             e.printStackTrace();

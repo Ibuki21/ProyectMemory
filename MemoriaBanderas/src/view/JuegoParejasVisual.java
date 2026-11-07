@@ -1,6 +1,7 @@
 package view;
 import controller.ControladorJuegoParejas;
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.net.URL;
 
@@ -34,10 +35,16 @@ public class JuegoParejasVisual extends JFrame {
     // Componentes Tablero 1
     private JButton[][] botonesTablero1;
     private JLabel lblIntentos1, lblPares1;
+    private JPanel panelSubTablero1;
 
     // Componentes Tablero 2
     private JButton[][] botonesTablero2;
     private JLabel lblIntentos2, lblPares2;
+    private JPanel panelSubTablero2;
+
+    // Turno y tiempo de la jugada
+    private JLabel lblTurno;
+    private JProgressBar barraTiempo;
 
     private JButton btnReiniciar;
 
@@ -52,22 +59,44 @@ public class JuegoParejasVisual extends JFrame {
         panelFondo.setLayout(new BorderLayout(15, 15));
         panelFondo.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // --- Título Principal ---
+        // --- Parte superior: título, turno actual y tiempo de la jugada ---
+        JPanel panelSuperior = new JPanel(new GridLayout(3, 1, 0, 6));
+        panelSuperior.setOpaque(false);
+
         JLabel lblTitulo = new JLabel("MODO DOBLE TABLERO: ENCUENTRA LAS PAREJAS", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitulo.setForeground(Color.WHITE);
-        panelFondo.add(lblTitulo, BorderLayout.NORTH);
+        panelSuperior.add(lblTitulo);
+
+        lblTurno = new JLabel("Turno: Jugador 1", SwingConstants.CENTER);
+        lblTurno.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTurno.setForeground(new Color(255, 215, 0));
+        panelSuperior.add(lblTurno);
+
+        // Barra con los 10 segundos de la jugada (100 décimas); cada acierto suma 7 segundos
+        barraTiempo = new JProgressBar(0, 100);
+        barraTiempo.setValue(100);
+        barraTiempo.setStringPainted(true);
+        barraTiempo.setString("Tiempo: 10.0 s");
+        barraTiempo.setFont(new Font("SansSerif", Font.BOLD, 12));
+        barraTiempo.setPreferredSize(new Dimension(500, 22));
+        JPanel panelBarra = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        panelBarra.setOpaque(false);
+        panelBarra.add(barraTiempo);
+        panelSuperior.add(panelBarra);
+
+        panelFondo.add(panelSuperior, BorderLayout.NORTH);
 
         // --- Panel Central con los Dos Tableros Lado a Lado ---
         JPanel panelContenedorTableros = new JPanel(new GridLayout(1, 2, 25, 0));
         panelContenedorTableros.setOpaque(false);
 
         // Crear Tablero 1
-        JPanel panelPanel1 = crearPanelSubTablero("Tablero 1", true);
+        JPanel panelPanel1 = crearPanelSubTablero("Jugador 1", true);
         panelContenedorTableros.add(panelPanel1);
 
         // Crear Tablero 2
-        JPanel panelPanel2 = crearPanelSubTablero("Tablero 2", false);
+        JPanel panelPanel2 = crearPanelSubTablero("Jugador 2", false);
         panelContenedorTableros.add(panelPanel2);
 
         panelFondo.add(panelContenedorTableros, BorderLayout.CENTER);
@@ -86,13 +115,26 @@ public class JuegoParejasVisual extends JFrame {
         new ControladorJuegoParejas(this);
     }
 
+    // Borde del tablero: dorado cuando es el turno de ese jugador y gris cuando no
+    private Border crearBordeTablero(String nombreTablero, boolean activo) {
+        Color colorLinea = activo ? new Color(255, 215, 0) : new Color(120, 120, 120);
+        return BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(colorLinea, 3),
+                " " + nombreTablero + " ",
+                0, 0, new Font("Segoe UI", Font.BOLD, 15), Color.WHITE);
+    }
+
+    // Resalta el tablero del jugador que tiene el turno
+    public void marcarTableroActivo(int numTablero) {
+        panelSubTablero1.setBorder(crearBordeTablero("Jugador 1", numTablero == 1));
+        panelSubTablero2.setBorder(crearBordeTablero("Jugador 2", numTablero == 2));
+    }
+
     private JPanel crearPanelSubTablero(String nombreTablero, boolean esTableroUno) {
         JPanel panelSub = new JPanel(new BorderLayout(5, 5));
         panelSub.setOpaque(false);
-        panelSub.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
-                " " + nombreTablero + " ",
-                0, 0, new Font("Segoe UI", Font.BOLD, 15), Color.WHITE));
+        // La partida empieza con el turno del jugador 1
+        panelSub.setBorder(crearBordeTablero(nombreTablero, esTableroUno));
 
         // Estadísticas del subtablero
         JPanel panelStats = new JPanel(new GridLayout(1, 2));
@@ -131,10 +173,12 @@ public class JuegoParejasVisual extends JFrame {
             botonesTablero1 = botones;
             lblIntentos1 = lblIntentos;
             lblPares1 = lblPares;
+            panelSubTablero1 = panelSub;
         } else {
             botonesTablero2 = botones;
             lblIntentos2 = lblIntentos;
             lblPares2 = lblPares;
+            panelSubTablero2 = panelSub;
         }
 
         return panelSub;
@@ -147,6 +191,8 @@ public class JuegoParejasVisual extends JFrame {
     public JLabel getLblPares1() { return lblPares1; }
     public JLabel getLblIntentos2() { return lblIntentos2; }
     public JLabel getLblPares2() { return lblPares2; }
+    public JLabel getLblTurno() { return lblTurno; }
+    public JProgressBar getBarraTiempo() { return barraTiempo; }
     public JButton getBtnReiniciar() { return btnReiniciar; }
     public int getFilas() { return FILAS; }
     public int getColumnas() { return COLUMNAS; }

@@ -1,12 +1,12 @@
 package controller;
 import model.JuegoParejasLogica;
 import view.JuegoParejasVisual;
-import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
-import java.net.URL;
 import javax.imageio.ImageIO;
 
 public class ControladorJuegoParejas {
@@ -18,8 +18,16 @@ public class ControladorJuegoParejas {
     private static final String RUTA_PAREJAS = "Recursos/Parejas/";
     private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
 
-    private boolean bloqueandoClics1 = false;
-    private boolean bloqueandoClics2 = false;
+    private static final int TICK_MS = 100;      // El reloj se actualiza cada 0.1 s
+    private static final int TIEMPO_TURNO = 100; // 10 segundos por jugada (en décimas)
+    private static final int TIEMPO_EXTRA = 70;  // 7 segundos extra por cada acierto (en décimas)
+
+    private boolean bloqueandoClics = false; // Verdadero mientras se revisa una pareja
+    private boolean juegoTerminado = false;
+    private int jugadorActual = 1;           // Jugador que tiene el turno (1 o 2)
+    private int tiempoRestante;              // Tiempo que le queda al jugador actual (en décimas)
+    private int partida = 0;                 // Cambia en cada reinicio para descartar revisiones pendientes
+    private Timer timerTurno;
 
     public ControladorJuegoParejas(JuegoParejasVisual vista) {
         this.vista = vista;
@@ -29,6 +37,18 @@ public class ControladorJuegoParejas {
         inicializarEventos();
         actualizarVistaTablero(1);
         actualizarVistaTablero(2);
+
+        timerTurno = new Timer(TICK_MS, e -> alPasarTiempo());
+
+        // Si se cierra la ventana, se detiene el reloj
+        vista.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                timerTurno.stop();
+            }
+        });
+
+        iniciarTurno(1);
     }
 
     private void inicializarEventos() {
@@ -40,10 +60,7 @@ public class ControladorJuegoParejas {
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
                 final int indice = i * columnas + j;
-                botones1[i][j].addActionListener(e -> {
-                    if (bloqueandoClics1) return;
-                    manejarClicTablero(1, indice);
-                });
+                botones1[i][j].addActionListener(e -> manejarClicTablero(1, indice));
             }
         }
 
@@ -52,16 +69,16 @@ public class ControladorJuegoParejas {
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
                 final int indice = i * columnas + j;
-                botones2[i][j].addActionListener(e -> {
-                    if (bloqueandoClics2) return;
-                    manejarClicTablero(2, indice);
-                });
+                botones2[i][j].addActionListener(e -> manejarClicTablero(2, indice));
             }
         }
 
         // Botón Reiniciar Ambos
         vista.getBtnReiniciar().addActionListener(e -> {
-            reproducirSonido(RUTA_AUDIO_CLICK);
+            ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+            partida++;
+            bloqueandoClics = false;
+            juegoTerminado = false;
             logica1.reiniciarJuego();
             logica2.reiniciarJuego();
             actualizarVistaTablero(1);
@@ -70,48 +87,144 @@ public class ControladorJuegoParejas {
             vista.getLblPares1().setText("Pares: 0 / 10");
             vista.getLblIntentos2().setText("Intentos: 0");
             vista.getLblPares2().setText("Pares: 0 / 10");
+            iniciarTurno(1);
         });
     }
 
+    // ---------- Turnos y tiempo ----------
+
+    private JuegoParejasLogica logicaDe(int jugador) {
+        return (jugador == 1) ? logica1 : logica2;
+    }
+
+    // Da el turno a un jugador con sus 10 segundos completos
+    private void iniciarTurno(int jugador) {
+        jugadorActual = jugador;
+        tiempoRestante = TIEMPO_TURNO;
+        vista.marcarTableroActivo(jugador);
+        vista.getLblTurno().setText("Turno: Jugador " + jugador);
+        vista.getBarraTiempo().setMaximum(TIEMPO_TURNO);
+        actualizarBarraTiempo();
+        timerTurno.restart();
+    }
+
+    // Pasa el turno al contrincante
+    private void cambiarTurno() {
+        int siguiente = (jugadorActual == 1) ? 2 : 1;
+        // Si el contrincante ya completó su tablero, el turno sigue siendo del jugador actual
+        if (logicaDe(siguiente).haGanado()) {
+            siguiente = jugadorActual;
+        }
+        iniciarTurno(siguiente);
+    }
+
+    // Se ejecuta cada 0.1 s mientras el jugador tiene el turno
+    private void alPasarTiempo() {
+        if (bloqueandoClics) {
+            return; // El reloj espera mientras se revisa la pareja elegida
+        }
+        tiempoRestante--;
+        actualizarBarraTiempo();
+        if (tiempoRestante <= 0) {
+            // Se acabó el tiempo: la carta volteada sin pareja se oculta y el turno pasa al contrincante
+            logicaDe(jugadorActual).cancelarSeleccionPendiente();
+            actualizarVistaTablero(jugadorActual);
+            cambiarTurno();
+        }
+    }
+
+    private void actualizarBarraTiempo() {
+        int decimas = Math.max(tiempoRestante, 0);
+        // Con los segundos extra el tiempo puede superar los 10 segundos iniciales
+        if (decimas > vista.getBarraTiempo().getMaximum()) {
+            vista.getBarraTiempo().setMaximum(decimas);
+        }
+        vista.getBarraTiempo().setValue(decimas);
+        vista.getBarraTiempo().setString(String.format("Tiempo: %.1f s", decimas / 10.0));
+    }
+
+    // ---------- Jugadas ----------
+
     private void manejarClicTablero(int numTablero, int indice) {
-        JuegoParejasLogica logicaActiva = (numTablero == 1) ? logica1 : logica2;
+        // Solo juega el jugador que tiene el turno, en su propio tablero
+        if (juegoTerminado || bloqueandoClics || numTablero != jugadorActual) return;
+
+        JuegoParejasLogica logicaActiva = logicaDe(numTablero);
         if (logicaActiva.estaRevelada(indice)) return;
 
-        reproducirSonido(RUTA_AUDIO_CLICK);
+        ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
 
         if (!logicaActiva.seleccionarCarta(indice)) return;
 
         actualizarVistaTablero(numTablero);
 
         if (logicaActiva.getIndiceSegundaSeleccion() != -1) {
-            if (numTablero == 1) bloqueandoClics1 = true;
-            else bloqueandoClics2 = true;
+            bloqueandoClics = true;
+            final int partidaActual = partida;
 
             Timer timer = new Timer(750, ae -> {
-                if (logicaActiva.evaluarPareja()) {
-                    if (logicaActiva.haGanado()) {
-                        JOptionPane.showMessageDialog(vista,
-                                "¡Felicidades! Has completado el Tablero " + numTablero + " en " + logicaActiva.getIntentos() + " intentos.",
-                                "¡Victoria en Tablero " + numTablero + "!", JOptionPane.INFORMATION_MESSAGE);
-                    }
-                } else {
+                if (partidaActual != partida) return; // Se reinició la partida mientras se revisaba
+
+                boolean acierto = logicaActiva.evaluarPareja();
+                if (!acierto) {
                     logicaActiva.ocultarSeleccionFallida();
                 }
 
                 actualizarVistaTablero(numTablero);
-                if (numTablero == 1) {
-                    vista.getLblIntentos1().setText("Intentos: " + logicaActiva.getIntentos());
-                    vista.getLblPares1().setText("Pares: " + logicaActiva.getParesEncontrados() + " / 10");
-                    bloqueandoClics1 = false;
-                } else {
-                    vista.getLblIntentos2().setText("Intentos: " + logicaActiva.getIntentos());
-                    vista.getLblPares2().setText("Pares: " + logicaActiva.getParesEncontrados() + " / 10");
-                    bloqueandoClics2 = false;
-                }
+                actualizarEstadisticas(numTablero);
+                bloqueandoClics = false;
+                resolverJugada(numTablero, acierto);
             });
             timer.setRepeats(false);
             timer.start();
         }
+    }
+
+    // Decide qué pasa después de revisar la pareja: fin del juego, tiempo extra o cambio de turno
+    private void resolverJugada(int numTablero, boolean acierto) {
+        if (logica1.haGanado() && logica2.haGanado()) {
+            terminarJuego();
+        } else if (acierto && !logicaDe(numTablero).haGanado()) {
+            // Acierto: el jugador conserva el turno y se le suman 7 segundos
+            tiempoRestante += TIEMPO_EXTRA;
+            actualizarBarraTiempo();
+        } else {
+            // Falla (o ya completó su tablero): el turno pasa al contrincante
+            cambiarTurno();
+        }
+    }
+
+    private void actualizarEstadisticas(int numTablero) {
+        JuegoParejasLogica logicaActiva = logicaDe(numTablero);
+        JLabel lblIntentos = (numTablero == 1) ? vista.getLblIntentos1() : vista.getLblIntentos2();
+        JLabel lblPares = (numTablero == 1) ? vista.getLblPares1() : vista.getLblPares2();
+        lblIntentos.setText("Intentos: " + logicaActiva.getIntentos());
+        lblPares.setText("Pares: " + logicaActiva.getParesEncontrados() + " / 10");
+    }
+
+    // ---------- Fin de la partida ----------
+
+    // Gana el jugador que usó menos intentos para encontrar todas las parejas
+    private void terminarJuego() {
+        juegoTerminado = true;
+        timerTurno.stop();
+
+        int intentos1 = logica1.getIntentos();
+        int intentos2 = logica2.getIntentos();
+
+        String resultado;
+        if (intentos1 < intentos2) {
+            resultado = "¡Gana el Jugador 1!";
+        } else if (intentos2 < intentos1) {
+            resultado = "¡Gana el Jugador 2!";
+        } else {
+            resultado = "¡Empate!";
+        }
+
+        JOptionPane.showMessageDialog(vista,
+                resultado + "\nJugador 1: " + intentos1 + " intentos"
+                        + "\nJugador 2: " + intentos2 + " intentos",
+                "Fin del juego", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void actualizarVistaTablero(int numTablero) {
@@ -187,21 +300,5 @@ public class ControladorJuegoParejas {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    private void reproducirSonido(String rutaAudio) {
-        new Thread(() -> {
-            try {
-                URL urlAudio = getClass().getClassLoader().getResource(rutaAudio);
-                if (urlAudio != null) {
-                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlAudio);
-                    Clip clip = AudioSystem.getClip();
-                    clip.open(audioStream);
-                    clip.start();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
     }
 }

@@ -50,6 +50,15 @@ public class ControladorModoPatron {
             }
         }
 
+        // Botón "Terminar intento": finaliza la partida en cualquier momento
+        vista.getBtnTerminarIntento().addActionListener(e -> {
+            if (juegoTerminado) {
+                return;
+            }
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+            terminarJuego("Terminaste el intento.");
+        });
+
         // Si se cierra la ventana, se detienen los tiempos
         vista.addWindowListener(new WindowAdapter() {
             @Override
@@ -191,10 +200,32 @@ public class ControladorModoPatron {
             GestorUsuarios.actualizarPuntuacionUsuario(actual);
         }
 
-        JOptionPane.showMessageDialog(vista,
+        // Al terminar, el jugador elige entre volver a intentar o volver al menú principal
+        Object[] opciones = {"Volver a intentar", "Volver al menú principal"};
+        int eleccion = JOptionPane.showOptionDialog(vista,
                 mensaje + "\nPatrones completados: " + puntajeObtenido,
-                "Fin del juego", JOptionPane.INFORMATION_MESSAGE);
-        vista.dispose();
+                "Fin del juego",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]);
+
+        if (eleccion == 0) {
+            reiniciarPartida();
+        } else {
+            // Cerrar el diálogo con la X cuenta como volver al menú
+            vista.dispose();
+        }
+    }
+
+    // Empieza una partida nueva desde cero (patrón inicial de 3 casillas)
+    private void reiniciarPartida() {
+        detenerTimers();
+        juegoTerminado = false;
+        turnoJugador = false;
+        logica.iniciar();
+        mostrarPatron();
     }
 
     private void detenerTimers() {

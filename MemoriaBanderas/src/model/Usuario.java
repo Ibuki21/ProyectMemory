@@ -10,6 +10,8 @@ public class Usuario {
     private String fechaNacimiento;
     private File fotoPerfil;
     private int puntuacionMaxima;
+    // Menor cantidad de intentos con la que ganó el juego de memoria (0 = todavía no tiene puntaje)
+    private int mejorIntentosParejas;
 
     public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil) {
         this.nombre = nombre;
@@ -23,6 +25,10 @@ public class Usuario {
     }
 
     public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil, int puntuacionMaxima) {
+        this(nombre, apellidos, correo, usuario, password, fechaNacimiento, fotoPerfil, puntuacionMaxima, 0);
+    }
+
+    public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil, int puntuacionMaxima, int mejorIntentosParejas) {
         this.nombre = nombre;
         this.apellidos = apellidos;
         this.correo = correo;
@@ -31,6 +37,7 @@ public class Usuario {
         this.fechaNacimiento = fechaNacimiento;
         this.fotoPerfil = fotoPerfil;
         this.puntuacionMaxima = puntuacionMaxima;
+        this.mejorIntentosParejas = mejorIntentosParejas;
     }
 
     // Getters y Setters
@@ -62,10 +69,26 @@ public class Usuario {
         }
     }
 
+    public int getMejorIntentosParejas() { return mejorIntentosParejas; }
+
+    // Registra los intentos de una victoria en el juego de memoria.
+    // Menos intentos es mejor: solo se guarda si supera la marca anterior.
+    // Devuelve true si la marca del usuario mejoró (o es la primera).
+    public boolean registrarIntentosParejas(int intentos) {
+        if (intentos <= 0) {
+            return false;
+        }
+        if (mejorIntentosParejas == 0 || intentos < mejorIntentosParejas) {
+            mejorIntentosParejas = intentos;
+            return true;
+        }
+        return false;
+    }
+
     // Métodos de Persistencia en TXT
     public String toFileString() {
         String rutaFoto = (fotoPerfil != null) ? fotoPerfil.getPath() : "null";
-        return nombre + "," + apellidos + "," + correo + "," + usuario + "," + password + "," + fechaNacimiento + "," + rutaFoto + "," + puntuacionMaxima;
+        return nombre + "," + apellidos + "," + correo + "," + usuario + "," + password + "," + fechaNacimiento + "," + rutaFoto + "," + puntuacionMaxima + "," + mejorIntentosParejas;
     }
 
     public static Usuario fromFileString(String line) {
@@ -83,7 +106,10 @@ public class Usuario {
 
             int puntuacion = Integer.parseInt(parts[7].trim());
 
-            return new Usuario(nombre, apellidos, correo, usuario, password, fechaNacimiento, foto, puntuacion);
+            // Los usuarios guardados antes de existir este campo no lo traen: quedan en 0
+            int mejorIntentos = (parts.length >= 9) ? Integer.parseInt(parts[8].trim()) : 0;
+
+            return new Usuario(nombre, apellidos, correo, usuario, password, fechaNacimiento, foto, puntuacion, mejorIntentos);
         }
         return null;
     }

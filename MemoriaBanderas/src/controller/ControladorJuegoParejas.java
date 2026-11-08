@@ -1,7 +1,10 @@
 package controller;
 
+import model.GestorUsuarios;
 import model.JuegoParejasLogica;
+import model.Usuario;
 import view.JuegoParejasVisual;
+import view.VentanaLogin;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -72,28 +75,109 @@ public class ControladorJuegoParejas {
             }
         }
 
-        // Botón Reiniciar Ambos Tableros
-        vista.getBtnReiniciar().addActionListener(e -> {
+        // Botón Finalizar intento: detiene la partida y pregunta si comenzar de nuevo o volver al menú
+        vista.getBtnFinalizar().addActionListener(e -> {
+            if (juegoTerminado) return;
             ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
-            partida++;
+            partida++; // Cancela cualquier jugada que estuviera por resolverse
+            juegoTerminado = true;
+            bloqueandoClics = true;
             if (timerTurno != null) timerTurno.stop();
             if (timerMemoria != null) timerMemoria.stop();
-
-            juegoTerminado = false;
-            logica1.reiniciarJuego();
-            logica2.reiniciarJuego();
-
-            vista.getLblIntentos1().setText("Intentos: 0");
-            vista.getLblPares1().setText("Pares: 0 / 18");
-            vista.getLblIntentos2().setText("Intentos: 0");
-            vista.getLblPares2().setText("Pares: 0 / 18");
-
-            // Restaura las cuadrículas eliminando los GIFs y volviendo a colocar los botones con nuevo orden
-            vista.restaurarGridTablero(1);
-            vista.restaurarGridTablero(2);
-
-            iniciarFaseMemoria();
+            preguntarSiguientePaso();
         });
+    }
+
+    // Pregunta qué hacer al terminar o finalizar una partida
+    private void preguntarSiguientePaso() {
+        Object[] opciones = {"Comenzar de nuevo", "Volver al menú principal"};
+        int eleccion = JOptionPane.showOptionDialog(vista,
+                "¿Qué desea hacer ahora?",
+                "Fin del juego",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]);
+
+        if (eleccion == 0) {
+            reiniciarPartida();
+        } else {
+            // Cerrar el diálogo con la X cuenta como volver al menú
+            vista.dispose();
+        }
+    }
+
+    // Empieza una partida nueva con ambos tableros mezclados de nuevo
+    private void reiniciarPartida() {
+        partida++;
+        if (timerTurno != null) timerTurno.stop();
+        if (timerMemoria != null) timerMemoria.stop();
+
+        juegoTerminado = false;
+        logica1.reiniciarJuego();
+        logica2.reiniciarJuego();
+
+        vista.getLblIntentos1().setText("Intentos: 0");
+        vista.getLblPares1().setText("Pares: 0 / 18");
+        vista.getLblIntentos2().setText("Intentos: 0");
+        vista.getLblPares2().setText("Pares: 0 / 18");
+
+        // Restaura las cuadrículas eliminando los GIFs y volviendo a colocar los botones con nuevo orden
+        vista.restaurarGridTablero(1);
+        vista.restaurarGridTablero(2);
+
+        iniciarFaseMemoria();
+    }
+
+    // Ofrece registrar el puntaje (intentos) del jugador que ganó.
+    // - Jugador 1 con sesión abierta: se guarda directamente en esa sesión.
+    // - Jugador 1 sin sesión: debe iniciar sesión o registrarse (el registro inicia sesión solo).
+    // - Jugador 2: siempre debe iniciar sesión o registrarse, porque es otra persona;
+    //   si ya había una sesión abierta, esa sesión se conserva al terminar.
+    private void ofrecerRegistroPuntaje(int jugador, int intentos) {
+        int respuesta = JOptionPane.showConfirmDialog(vista,
+                "Jugador " + jugador + ", ganó con " + intentos + " intentos.\n¿Desea registrar su puntaje?",
+                "Registrar puntaje", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (respuesta != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        Usuario sesionPrevia = GestorUsuarios.getUsuarioSesionActual();
+        Usuario destino;
+
+        if (jugador == 1 && sesionPrevia != null) {
+            destino = sesionPrevia;
+        } else {
+            if (sesionPrevia != null) {
+                GestorUsuarios.cerrarSesion(); // Para saber quién inicia sesión ahora
+            }
+            VentanaLogin login = new VentanaLogin(vista);
+            new ControladorLogin(login);
+            login.setVisible(true);
+            destino = GestorUsuarios.getUsuarioSesionActual();
+        }
+
+        if (destino == null) {
+            GestorUsuarios.establecerSesion(sesionPrevia);
+            JOptionPane.showMessageDialog(vista, "No se registró el puntaje porque no se inició sesión.",
+                    "Puntaje no registrado", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        boolean mejoro = destino.registrarIntentosParejas(intentos);
+        GestorUsuarios.actualizarPuntuacionUsuario(destino);
+
+        String mensaje = "Puntaje registrado para " + destino.getUsuario() + ": " + intentos + " intentos.";
+        if (!mejoro) {
+            mensaje += "\nSu mejor marca sigue siendo " + destino.getMejorIntentosParejas() + " intentos.";
+        }
+        JOptionPane.showMessageDialog(vista, mensaje, "Puntaje registrado", JOptionPane.INFORMATION_MESSAGE);
+
+        // El jugador 2 no reemplaza una sesión que ya estaba abierta
+        if (jugador == 2 && sesionPrevia != null) {
+            GestorUsuarios.establecerSesion(sesionPrevia);
+        }
     }
 
     private void iniciarFaseMemoria() {
@@ -249,6 +333,8 @@ public class ControladorJuegoParejas {
 
                 vista.getLblTurno().setText("¡Jugador 1 completó su tablero primero!");
                 JOptionPane.showMessageDialog(vista, "¡El Jugador 1 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
+                ofrecerRegistroPuntaje(1, logica1.getIntentos());
+                preguntarSiguientePaso();
             } else if (gano2) {
                 juegoTerminado = true;
                 if (timerTurno != null) timerTurno.stop();
@@ -258,6 +344,8 @@ public class ControladorJuegoParejas {
 
                 vista.getLblTurno().setText("¡Jugador 2 completó su tablero primero!");
                 JOptionPane.showMessageDialog(vista, "¡El Jugador 2 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
+                ofrecerRegistroPuntaje(2, logica2.getIntentos());
+                preguntarSiguientePaso();
             }
         }
     }
@@ -284,6 +372,15 @@ public class ControladorJuegoParejas {
         JOptionPane.showMessageDialog(vista,
                 "¡Ambos tableros completados!\nJugador 1: " + intentos1 + " intentos\nJugador 2: " + intentos2 + " intentos",
                 "Fin del juego", JOptionPane.INFORMATION_MESSAGE);
+
+        // Gana quien usó menos intentos; si empatan, ambos pueden registrar su puntaje
+        if (intentos1 <= intentos2) {
+            ofrecerRegistroPuntaje(1, intentos1);
+        }
+        if (intentos2 <= intentos1) {
+            ofrecerRegistroPuntaje(2, intentos2);
+        }
+        preguntarSiguientePaso();
     }
 
     private void cargarGifEnTablero(int numTablero, boolean esVictoria) {

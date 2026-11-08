@@ -42,8 +42,15 @@ public class ControladorLogin {
     }
 
     private void abrirRegistro() {
+        Usuario sesionAntes = GestorUsuarios.getUsuarioSesionActual();
         VentanaRegistro registroView = new VentanaRegistro(vista);
         new ControladorRegistro(registroView);
         registroView.setVisible(true);
+
+        // Si el registro inició sesión automáticamente, ya no hace falta el login
+        Usuario sesionDespues = GestorUsuarios.getUsuarioSesionActual();
+        if (sesionDespues != null && sesionDespues != sesionAntes) {
+            vista.dispose();
+        }
     }
 }

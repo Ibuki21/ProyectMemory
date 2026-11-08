@@ -97,6 +97,7 @@ public class VentanaMenuPrincipal extends JFrame {
                 Dimension destino = new Dimension(
                         (int) Math.round(tamanoFijo.width * escala),
                         (int) Math.round(tamanoFijo.height * escala));
+
                 if (!getSize().equals(destino)) {
                     setSize(destino);
                 }
@@ -330,9 +331,7 @@ public class VentanaMenuPrincipal extends JFrame {
         // La capa de componentes ocupa siempre todo el panel, aunque la ventana se maximice
         panelContenedorCapas.setLayout(new BorderLayout());
 
-        // Capa superior transparente para los botones y la tabla flotante.
-        // En cada ajuste de tamaño, la tabla se ancla a la esquina inferior izquierda
-        // y los botones a la esquina inferior derecha.
+        // Capa superior transparente para la tabla flotante (izquierda) y los botones centrados.
         JPanel panelComponentesFlotantes = new JPanel(null) {
             @Override
             public void doLayout() {
@@ -342,29 +341,37 @@ public class VentanaMenuPrincipal extends JFrame {
                     return;
                 }
                 if (baseContenido == null) {
-                    // Primera distribución: la ventana todavía está en su tamaño fijo
                     baseContenido = new Dimension(ancho, alto);
                 }
 
-                // Todo el contenido (tabla, botones, textos) se escala con el tamaño de la ventana
                 double escala = Math.min((double) ancho / baseContenido.width,
                         (double) alto / baseContenido.height);
                 int margen = (int) Math.round(MARGEN * escala);
+
                 int anchoBoton = (int) Math.round(ANCHO_BOTON * escala);
                 int altoBoton = (int) Math.round(ALTO_BOTON * escala);
                 int separacion = (int) Math.round(SEPARACION_BOTONES * escala);
+
                 int anchoTabla = (int) Math.round(ANCHO_LEADERBOARD * escala);
                 int altoTabla = (int) Math.round(ALTO_LEADERBOARD * escala);
 
+                // 🏆 Tabla en la esquina inferior izquierda
                 if (panelLeaderboard != null) {
                     panelLeaderboard.setBounds(margen, alto - altoTabla - margen, anchoTabla, altoTabla);
                     aplicarEscalaTabla(escala);
                 }
 
+                // 📌 Posicionar los botones en el CENTRO HORIZONTAL y un poco más abajo de la zona superior/cascada
                 JButton[] botones = {btnLogin, btnBandera, btnPatron, btnMusica};
                 int altoColumna = botones.length * altoBoton + (botones.length - 1) * separacion;
-                int x = ancho - anchoBoton - margen;
-                int y = alto - altoColumna - margen;
+
+                // Centrado horizontal
+                int x = (ancho - anchoBoton) / 2;
+
+                // Ubicado en la parte central-baja (puedes ajustar el factor divisor si deseas subirlos o bajarlos más:
+                // por ejemplo (alto - altoColumna) / 2 + 50 los coloca ligeramente debajo del centro exacto).
+                int y = (alto - altoColumna) / 2 + 60;
+
                 for (JButton boton : botones) {
                     if (boton != null) {
                         boton.setBounds(x, y, anchoBoton, altoBoton);
@@ -490,6 +497,7 @@ public class VentanaMenuPrincipal extends JFrame {
     // Borde dorado con título de la tabla de jugadores, con la letra ajustada a la escala
     private Border crearBordeLeaderboard(double escala) {
         int tamanoLetra = Math.max(8, (int) Math.round(14 * escala));
+
         return BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
                 " Top Jugadores ",
@@ -503,8 +511,10 @@ public class VentanaMenuPrincipal extends JFrame {
         }
         escalaTextoAplicada = escala;
         int tamanoLetra = Math.max(7, (int) Math.round(12 * escala));
+
         tablaPuntuaciones.setFont(new Font("Segoe UI", Font.PLAIN, tamanoLetra));
         tablaPuntuaciones.setRowHeight(Math.max(10, (int) Math.round(24 * escala)));
+
         tablaPuntuaciones.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, tamanoLetra));
         panelLeaderboard.setBorder(crearBordeLeaderboard(escala));
     }

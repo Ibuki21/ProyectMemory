@@ -61,7 +61,9 @@ public class ControladorRegistro {
 
         Usuario nuevoUsuario = new Usuario(nombre, apellidos, correo, usuario, password, fechaNac, vista.getArchivoFotoSeleccionado());
         if (GestorUsuarios.registrarUsuario(nuevoUsuario)) {
-            JOptionPane.showMessageDialog(vista, "¡Registro realizado con éxito! Se guardó en el archivo usuarios.txt.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            // Al registrarse, la sesión se inicia automáticamente con el usuario nuevo
+            GestorUsuarios.establecerSesion(nuevoUsuario);
+            JOptionPane.showMessageDialog(vista, "¡Registro realizado con éxito! Se inició sesión como " + usuario + ".", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             vista.dispose();
         } else {
             JOptionPane.showMessageDialog(vista, "El correo o nombre de usuario ya se encuentra registrado.", "Error", JOptionPane.ERROR_MESSAGE);

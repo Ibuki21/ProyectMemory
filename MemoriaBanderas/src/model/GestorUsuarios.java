@@ -116,6 +116,22 @@ public class GestorUsuarios {
         usuarioSesionActual = null;
     }
 
+    // Deja a un usuario como sesión activa. Se vuelve a leer del archivo para no usar
+    // una copia desactualizada (por ejemplo, sin un puntaje recién guardado).
+    public static void establecerSesion(Usuario usuario) {
+        if (usuario == null) {
+            usuarioSesionActual = null;
+            return;
+        }
+        for (Usuario u : cargarUsuarios()) {
+            if (u.getUsuario().equalsIgnoreCase(usuario.getUsuario())) {
+                usuarioSesionActual = u;
+                return;
+            }
+        }
+        usuarioSesionActual = usuario;
+    }
+
     public static List<Usuario> getMejoresPuntuaciones() {
         List<Usuario> listaOrdenada = cargarUsuarios();
         listaOrdenada.sort(Comparator.comparingInt(Usuario::getPuntuacionMaxima).reversed());

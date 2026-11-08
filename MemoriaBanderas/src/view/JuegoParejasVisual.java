@@ -49,7 +49,7 @@ public class JuegoParejasVisual extends JFrame {
     private JLabel lblTurno;
     private JProgressBar barraTiempo;
 
-    private JButton btnReiniciar;
+    private JButton btnFinalizar;
 
     public JuegoParejasVisual() {
         setTitle("Doble Desafío: Encuentra la Pareja (Modo Clásico 6x6)");
@@ -104,9 +104,9 @@ public class JuegoParejasVisual extends JFrame {
         // --- Panel Inferior ---
         JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panelInferior.setOpaque(false);
-        btnReiniciar = new JButton("Reiniciar Ambos Tableros");
-        btnReiniciar.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        panelInferior.add(btnReiniciar);
+        btnFinalizar = new JButton("Finalizar intento");
+        btnFinalizar.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        panelInferior.add(btnFinalizar);
         panelFondo.add(panelInferior, BorderLayout.SOUTH);
 
         setContentPane(panelFondo);
@@ -213,7 +213,7 @@ public class JuegoParejasVisual extends JFrame {
     public JLabel getLblPares2() { return lblPares2; }
     public JLabel getLblTurno() { return lblTurno; }
     public JProgressBar getBarraTiempo() { return barraTiempo; }
-    public JButton getBtnReiniciar() { return btnReiniciar; }
+    public JButton getBtnFinalizar() { return btnFinalizar; }
     public int getFilas() { return FILAS; }
     public int getColumnas() { return COLUMNAS; }
 }

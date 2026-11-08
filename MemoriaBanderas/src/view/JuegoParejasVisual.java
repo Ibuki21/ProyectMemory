@@ -1,4 +1,5 @@
 package view;
+
 import controller.ControladorJuegoParejas;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -29,8 +30,8 @@ public class JuegoParejasVisual extends JFrame {
         }
     }
 
-    private static final int FILAS = 4;
-    private static final int COLUMNAS = 5;
+    private static final int FILAS = 6;
+    private static final int COLUMNAS = 6;
 
     // Componentes Tablero 1
     private JButton[][] botonesTablero1;
@@ -51,27 +52,27 @@ public class JuegoParejasVisual extends JFrame {
     private JButton btnReiniciar;
 
     public JuegoParejasVisual() {
-        setTitle("Doble Desafío: Encuentra la Pareja - Juegos de Memoria");
-        setSize(1280, 720);
+        setTitle("Doble Desafío: Encuentra la Pareja (Modo Clásico 6x6)");
+        setSize(1280, 768);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
         PanelFondo panelFondo = new PanelFondo("Recursos/Fondo1.jpg");
-        panelFondo.setLayout(new BorderLayout(15, 15));
-        panelFondo.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panelFondo.setLayout(new BorderLayout(10, 10));
+        panelFondo.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // --- Parte superior: título, turno actual y tiempo de la jugada ---
-        JPanel panelSuperior = new JPanel(new GridLayout(3, 1, 0, 6));
+        // --- Parte superior ---
+        JPanel panelSuperior = new JPanel(new GridLayout(3, 1, 0, 4));
         panelSuperior.setOpaque(false);
 
-        JLabel lblTitulo = new JLabel("MODO DOBLE TABLERO: ENCUENTRA LAS PAREJAS", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        JLabel lblTitulo = new JLabel("MODO CLÁSICO: DOBLE TABLERO 6x6 (18 PARES)", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitulo.setForeground(Color.WHITE);
         panelSuperior.add(lblTitulo);
 
         lblTurno = new JLabel("Turno: Jugador 1", SwingConstants.CENTER);
-        lblTurno.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTurno.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblTurno.setForeground(new Color(255, 215, 0));
         panelSuperior.add(lblTurno);
 
@@ -80,7 +81,7 @@ public class JuegoParejasVisual extends JFrame {
         barraTiempo.setStringPainted(true);
         barraTiempo.setString("Tiempo: 10.0 s");
         barraTiempo.setFont(new Font("SansSerif", Font.BOLD, 12));
-        barraTiempo.setPreferredSize(new Dimension(500, 22));
+        barraTiempo.setPreferredSize(new Dimension(500, 20));
         JPanel panelBarra = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         panelBarra.setOpaque(false);
         panelBarra.add(barraTiempo);
@@ -89,7 +90,7 @@ public class JuegoParejasVisual extends JFrame {
         panelFondo.add(panelSuperior, BorderLayout.NORTH);
 
         // --- Panel Central con los Dos Tableros Lado a Lado ---
-        JPanel panelContenedorTableros = new JPanel(new GridLayout(1, 2, 25, 0));
+        JPanel panelContenedorTableros = new JPanel(new GridLayout(1, 2, 20, 0));
         panelContenedorTableros.setOpaque(false);
 
         JPanel panelPanel1 = crearPanelSubTablero("Jugador 1", true);
@@ -100,11 +101,11 @@ public class JuegoParejasVisual extends JFrame {
 
         panelFondo.add(panelContenedorTableros, BorderLayout.CENTER);
 
-        // --- Panel Inferior (Botón Reiniciar) ---
+        // --- Panel Inferior ---
         JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panelInferior.setOpaque(false);
         btnReiniciar = new JButton("Reiniciar Ambos Tableros");
-        btnReiniciar.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btnReiniciar.setFont(new Font("Segoe UI", Font.BOLD, 14));
         panelInferior.add(btnReiniciar);
         panelFondo.add(panelInferior, BorderLayout.SOUTH);
 
@@ -117,7 +118,7 @@ public class JuegoParejasVisual extends JFrame {
         return BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(colorLinea, 3),
                 " " + nombreTablero + " ",
-                0, 0, new Font("Segoe UI", Font.BOLD, 15), Color.WHITE);
+                0, 0, new Font("Segoe UI", Font.BOLD, 14), Color.WHITE);
     }
 
     public void marcarTableroActivo(int numTablero) {
@@ -126,32 +127,33 @@ public class JuegoParejasVisual extends JFrame {
     }
 
     private JPanel crearPanelSubTablero(String nombreTablero, boolean esTableroUno) {
-        JPanel panelSub = new JPanel(new BorderLayout(5, 5));
+        JPanel panelSub = new JPanel(new BorderLayout(4, 4));
         panelSub.setOpaque(false);
         panelSub.setBorder(crearBordeTablero(nombreTablero, esTableroUno));
 
         JPanel panelStats = new JPanel(new GridLayout(1, 2));
         panelStats.setOpaque(false);
         JLabel lblIntentos = new JLabel("Intentos: 0", SwingConstants.CENTER);
-        lblIntentos.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblIntentos.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblIntentos.setForeground(new Color(220, 235, 255));
 
-        JLabel lblPares = new JLabel("Pares: 0 / 10", SwingConstants.CENTER);
-        lblPares.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        JLabel lblPares = new JLabel("Pares: 0 / 18", SwingConstants.CENTER);
+        lblPares.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblPares.setForeground(new Color(220, 235, 255));
 
         panelStats.add(lblIntentos);
         panelStats.add(lblPares);
         panelSub.add(panelStats, BorderLayout.NORTH);
 
-        JPanel panelGrid = new JPanel(new GridLayout(FILAS, COLUMNAS, 8, 8));
+        // Matriz 6x6 adaptada al espacio visual
+        JPanel panelGrid = new JPanel(new GridLayout(FILAS, COLUMNAS, 5, 5));
         panelGrid.setOpaque(false);
 
         JButton[][] botones = new JButton[FILAS][COLUMNAS];
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
                 JButton btn = new JButton();
-                btn.setPreferredSize(new Dimension(105, 95));
+                btn.setPreferredSize(new Dimension(55, 55));
                 btn.setFocusPainted(false);
                 btn.setBackground(new Color(30, 50, 80));
                 btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -178,7 +180,6 @@ public class JuegoParejasVisual extends JFrame {
         return panelSub;
     }
 
-    // Muestra un GIF (Victoria o Derrota) en el área central del subtablero correspondiente
     public void mostrarGifEnTablero(int numTablero, ImageIcon gifIcono) {
         JPanel panelGrid = (numTablero == 1) ? panelGrid1 : panelGrid2;
         panelGrid.removeAll();
@@ -190,11 +191,10 @@ public class JuegoParejasVisual extends JFrame {
         panelGrid.repaint();
     }
 
-    // Restaura la cuadrícula de botones al reiniciar
     public void restaurarGridTablero(int numTablero) {
         JPanel panelGrid = (numTablero == 1) ? panelGrid1 : panelGrid2;
         panelGrid.removeAll();
-        panelGrid.setLayout(new GridLayout(FILAS, COLUMNAS, 8, 8));
+        panelGrid.setLayout(new GridLayout(FILAS, COLUMNAS, 5, 5));
         JButton[][] botones = (numTablero == 1) ? botonesTablero1 : botonesTablero2;
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {

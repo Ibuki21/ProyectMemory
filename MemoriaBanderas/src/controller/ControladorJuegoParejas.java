@@ -84,11 +84,11 @@ public class ControladorJuegoParejas {
             logica2.reiniciarJuego();
 
             vista.getLblIntentos1().setText("Intentos: 0");
-            vista.getLblPares1().setText("Pares: 0 / 10");
+            vista.getLblPares1().setText("Pares: 0 / 18");
             vista.getLblIntentos2().setText("Intentos: 0");
-            vista.getLblPares2().setText("Pares: 0 / 10");
+            vista.getLblPares2().setText("Pares: 0 / 18");
 
-            // Restaura las cuadrículas eliminando los GIFs y volviendo a colocar los botones
+            // Restaura las cuadrículas eliminando los GIFs y volviendo a colocar los botones con nuevo orden
             vista.restaurarGridTablero(1);
             vista.restaurarGridTablero(2);
 
@@ -100,7 +100,7 @@ public class ControladorJuegoParejas {
         faseDeMemoria = true;
         bloqueandoClics = true;
         vista.marcarTableroActivo(1);
-        vista.getLblTurno().setText("¡MEMORICEN LAS CARTAS!");
+        vista.getLblTurno().setText("¡MEMORICEN LAS CARTAS (5s)!");
 
         actualizarVistaTablero(1);
         actualizarVistaTablero(2);
@@ -230,7 +230,7 @@ public class ControladorJuegoParejas {
         JLabel lblIntentos = (numTablero == 1) ? vista.getLblIntentos1() : vista.getLblIntentos2();
         JLabel lblPares = (numTablero == 1) ? vista.getLblPares1() : vista.getLblPares2();
         lblIntentos.setText("Intentos: " + logicaActiva.getIntentos());
-        lblPares.setText("Pares: " + logicaActiva.getParesEncontrados() + " / 10");
+        lblPares.setText("Pares: " + logicaActiva.getParesEncontrados() + " / 18");
     }
 
     private void verificarFinPartidaDual() {
@@ -244,8 +244,8 @@ public class ControladorJuegoParejas {
                 juegoTerminado = true;
                 if (timerTurno != null) timerTurno.stop();
 
-                cargarGifEnTablero(1, true);  // Carga Victoria.gif
-                cargarGifEnTablero(2, false); // Carga Derrota.gif
+                cargarGifEnTablero(1, true);  // Carga Victoria.gif[cite: 1]
+                cargarGifEnTablero(2, false); // Carga Derrota.gif[cite: 1]
 
                 vista.getLblTurno().setText("¡Jugador 1 completó su tablero primero!");
                 JOptionPane.showMessageDialog(vista, "¡El Jugador 1 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
@@ -253,8 +253,8 @@ public class ControladorJuegoParejas {
                 juegoTerminado = true;
                 if (timerTurno != null) timerTurno.stop();
 
-                cargarGifEnTablero(2, true);  // Carga Victoria.gif
-                cargarGifEnTablero(1, false); // Carga Derrota.gif
+                cargarGifEnTablero(2, true);  // Carga Victoria.gif[cite: 1]
+                cargarGifEnTablero(1, false); // Carga Derrota.gif[cite: 1]
 
                 vista.getLblTurno().setText("¡Jugador 2 completó su tablero primero!");
                 JOptionPane.showMessageDialog(vista, "¡El Jugador 2 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
@@ -287,9 +287,9 @@ public class ControladorJuegoParejas {
     }
 
     private void cargarGifEnTablero(int numTablero, boolean esVictoria) {
-        // Rutas exactas basadas en la estructura de tu proyecto:
-        // Victoria: Recursos/Cancion/Ganaste/Victoria.gif[cite: 1]
-        // Derrota: Recursos/Cancion/Perdiste/Derrota.gif[cite: 1]
+        // Rutas exactas basadas en tu estructura:
+        // Victoria -> Recursos/Cancion/Ganaste/Victoria.gif[cite: 1]
+        // Derrota -> Recursos/Cancion/Perdiste/Derrota.gif[cite: 1]
         String rutaGif = esVictoria ?
                 "Recursos/Cancion/Ganaste/Victoria.gif" :
                 "Recursos/Cancion/Perdiste/Derrota.gif";
@@ -318,7 +318,7 @@ public class ControladorJuegoParejas {
 
                 if (faseDeMemoria || logicaActiva.estaRevelada(indice) || estaTemporalmenteVolteada(logicaActiva, indice)) {
                     String nombreArchivo = logicaActiva.getCodigoCarta(indice);
-                    ImageIcon icono = cargarImagenEscalada(nombreArchivo, 85, 75);
+                    ImageIcon icono = cargarImagenEscalada(nombreArchivo, 55, 55);
                     if (icono != null) {
                         btn.setIcon(icono);
                         btn.setText("");
@@ -330,7 +330,7 @@ public class ControladorJuegoParejas {
                 } else {
                     btn.setIcon(null);
                     btn.setText("❓");
-                    btn.setFont(new Font("Segoe UI", Font.BOLD, 22));
+                    btn.setFont(new Font("Segoe UI", Font.BOLD, 18));
                     btn.setForeground(Color.WHITE);
                     btn.setBackground(new Color(30, 50, 80));
                 }

@@ -24,7 +24,6 @@ public class JuegoParejasLogica {
             "Dragon", "Rojo", "Navidad", "Rosa", "Calabaza", "Fantasma", "Halloween", "Otono",
             "Cafe", "Fresa", "Estrella", "Gato", "Honguitos", "Manzanas", "Moneda", "Reloj", "Sombrero", "Vela"
     };
-
     public JuegoParejasLogica() {
         codigosCartas = new String[TOTAL_CASILLAS];
         reveladas = new boolean[TOTAL_CASILLAS];

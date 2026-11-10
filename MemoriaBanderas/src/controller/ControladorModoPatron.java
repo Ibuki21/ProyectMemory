@@ -191,19 +191,35 @@ public class ControladorModoPatron {
         turnoJugador = false;
         detenerTimers();
 
-        int puntajeObtenido = logica.getPatronesCompletados();
-        Usuario actual = GestorUsuarios.getUsuarioSesionActual();
+        int patronesCompletados = logica.getPatronesCompletados();
 
-        if (actual != null) {
-            actual.setPuntuacionMaxima(puntajeObtenido);
-            // Escribe el puntaje en usuarios.txt para que aparezca en la tabla de mejores jugadores
-            GestorUsuarios.actualizarPuntuacionUsuario(actual);
+        // 🧮 Aseguramos que al menos cuente como 1 para que la fórmula del API no devuelva 0
+        int puntajeParaFormula = Math.max(patronesCompletados, 1);
+
+        // Cálculo de puntos usando la fórmula del API del BCCR
+        double puntosCalculados = model.ServicioCambioDolar.calcularPremio(puntajeParaFormula);
+
+        // Si completó 0 patrones adicionales, le damos un puntaje base mínimo por participar (ej. 100 puntos + lo del API, o un valor fijo)
+        int puntosRedondeados = (int) Math.round(puntosCalculados);
+        if (patronesCompletados == 0) {
+            puntosRedondeados = 50; // Puntos de consolación por participar
         }
 
-        // Al terminar, el jugador elige entre volver a intentar o volver al menú principal
+        Usuario actual = GestorUsuarios.getUsuarioSesionActual();
+        if (actual != null) {
+            // Suma los puntos nuevos de forma acumulativa al perfil
+            actual.agregarPuntos(puntosRedondeados);
+            GestorUsuarios.actualizarPuntuacionUsuario(actual); // Guarda en usuarios.txt
+            System.out.println("Puntos sumados exitosamente a " + actual.getUsuario() + ": +" + puntosRedondeados);
+        } else {
+            System.err.println("Error: No hay una sesión activa en GestorUsuarios al terminar el juego.");
+        }
+
+        // Mensaje limpio en pantalla
         Object[] opciones = {"Volver a intentar", "Volver al menú principal"};
         int eleccion = JOptionPane.showOptionDialog(vista,
-                mensaje + "\nPatrones completados: " + puntajeObtenido,
+                mensaje + "\nPatrones completados: " + patronesCompletados +
+                        "\n⭐ ¡Puntos sumados a tu cuenta: +" + puntosRedondeados + "!",
                 "Fin del juego",
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
@@ -214,11 +230,9 @@ public class ControladorModoPatron {
         if (eleccion == 0) {
             reiniciarPartida();
         } else {
-            // Cerrar el diálogo con la X cuenta como volver al menú
             vista.dispose();
         }
     }
-
     // Empieza una partida nueva desde cero (patrón inicial de 3 casillas)
     private void reiniciarPartida() {
         detenerTimers();

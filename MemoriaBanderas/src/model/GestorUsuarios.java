@@ -105,6 +105,11 @@ public class GestorUsuarios {
             } catch (IOException e) {
                 System.err.println("Error al reescribir puntuaciones en archivo: " + e.getMessage());
             }
+
+            // Sincroniza la sesión activa en memoria para reflejar los puntos acumulados al instante
+            if (usuarioSesionActual != null && usuarioSesionActual.getUsuario().equalsIgnoreCase(usuarioActualizado.getUsuario())) {
+                usuarioSesionActual = usuarioActualizado;
+            }
         }
     }
 
@@ -116,8 +121,6 @@ public class GestorUsuarios {
         usuarioSesionActual = null;
     }
 
-    // Deja a un usuario como sesión activa. Se vuelve a leer del archivo para no usar
-    // una copia desactualizada (por ejemplo, sin un puntaje recién guardado).
     public static void establecerSesion(Usuario usuario) {
         if (usuario == null) {
             usuarioSesionActual = null;

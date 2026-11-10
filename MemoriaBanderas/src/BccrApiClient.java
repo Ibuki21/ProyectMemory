@@ -7,8 +7,8 @@ import java.time.format.DateTimeFormatter;
 
 public class BccrApiClient {
     public static void main(String[] args) {
-        String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJCQ0NSLVNEREUiLCJzdWIiOiJhYmF0aC5mYWxsYXNAb3V0bG9vay5jb20iLCJhdWQiOiJTRERFLVNpdGlvRXh0ZXJubyIsImV4cCI6MjUzNDAyMzAwODAwLCJuYmYiOjE3OTMyODQ0NzMsImlhdCI6MTc5MzI4NDQ3MywianRpIjoiZDJkOTYyOWItODJjNi00NDQ4LWEwMjYtYzRlMDEyN2YwNTdiIiwiZW1haWwiOiJhYmF0aC5mYWxsYXNAb3V0bG9vay5jb20ifQ.zm1TmrMtvf0UM4kgILkLP-0QXE3U5bApsqmEJjQjcbQ";
-        String email = "abath.fallas@outlook.com";
+        String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJCQ0NSLVNEREUiLCJzdWIiOiJqb3JzaGFucXVlc2FkYUBnbWFpbC5jb20iLCJhdWQiOiJTRERFLVNpdGlvRXh0ZXJubyIsImV4cCI6MjUzNDAyMzAwODAwLCJuYmYiOjE3OTMyODQ0NjAsImlhdCI6MTc5MzI4NDQ2MCwianRpIjoiMDlhYmMwODQtOWI5My00YzBlLWE0MTAtOTAxNTI4NTVlNTkwIiwiZW1haWwiOiJqb3JzaGFucXVlc2FkYUBnbWFpbC5jb20ifQ.VRmfKg0UjOxnZx-r7H9M4UYi_K8sI3v0og7SPNNPB6I";
+        String email = "jorshanquesada@gmail.com";
 
         DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy/MM/dd");
         String hasta = LocalDate.now().format(f);

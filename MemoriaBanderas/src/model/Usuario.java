@@ -10,10 +10,8 @@ public class Usuario {
     private String fechaNacimiento;
     private File fotoPerfil;
     private int puntuacionMaxima;
-    // Menor cantidad de intentos con la que ganó el juego de memoria (0 = todavía no tiene puntaje)
     private int mejorIntentosParejas;
 
-    // Constructor sin puntuación inicial (inicia en 0)
     public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil) {
         this.nombre = nombre;
         this.apellidos = apellidos;
@@ -23,9 +21,9 @@ public class Usuario {
         this.fechaNacimiento = fechaNacimiento;
         this.fotoPerfil = fotoPerfil;
         this.puntuacionMaxima = 0;
+        this.mejorIntentosParejas = 0;
     }
 
-    // Constructor completo con puntuación
     public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil, int puntuacionMaxima) {
         this(nombre, apellidos, correo, usuario, password, fechaNacimiento, fotoPerfil, puntuacionMaxima, 0);
     }
@@ -105,20 +103,18 @@ public class Usuario {
     }
 
     public void setPuntuacionMaxima(int puntuacion) {
-        if (puntuacion > this.puntuacionMaxima) {
-            this.puntuacionMaxima = puntuacion;
-        }
+        this.puntuacionMaxima = puntuacion;
     }
 
-<<<<<<< HEAD
-    // --- Métodos de Persistencia en Archivo de Texto ---
+    // Acumula los puntos nuevos sumándolos al total actual de forma persistente
+    public void agregarPuntos(int puntosNuevos) {
+        this.puntuacionMaxima += puntosNuevos;
+    }
 
-=======
-    public int getMejorIntentosParejas() { return mejorIntentosParejas; }
+    public int getMejorIntentosParejas() {
+        return mejorIntentosParejas;
+    }
 
-    // Registra los intentos de una victoria en el juego de memoria.
-    // Menos intentos es mejor: solo se guarda si supera la marca anterior.
-    // Devuelve true si la marca del usuario mejoró (o es la primera).
     public boolean registrarIntentosParejas(int intentos) {
         if (intentos <= 0) {
             return false;
@@ -130,16 +126,16 @@ public class Usuario {
         return false;
     }
 
-    // Métodos de Persistencia en TXT
->>>>>>> origin/main
+    // --- Métodos de Persistencia en Archivo de Texto ---
+
     public String toFileString() {
-        String rutaFoto = (fotoPerfil != null) ? fotoPerfil.getPath() : "null";
+        String rutaFoto = (fotoPerfil != null) ? fotoPerfil.getPath().replace(",", "_") : "null";
         return nombre + "," + apellidos + "," + correo + "," + usuario + "," + password + "," + fechaNacimiento + "," + rutaFoto + "," + puntuacionMaxima + "," + mejorIntentosParejas;
     }
 
     public static Usuario fromFileString(String line) {
         String[] parts = line.split(",");
-        if (parts.length >= 8) {
+        if (parts.length >= 9) {
             String nombre = parts[0].trim();
             String apellidos = parts[1].trim();
             String correo = parts[2].trim();
@@ -147,20 +143,22 @@ public class Usuario {
             String password = parts[4].trim();
             String fechaNacimiento = parts[5].trim();
 
-            // La foto siempre se toma de la penúltima posición
-            String rutaFoto = parts[parts.length - 2].trim();
+            String rutaFoto = parts[6].trim();
             File foto = (rutaFoto.equals("null") || rutaFoto.isEmpty()) ? null : new File(rutaFoto);
 
-            // La puntuación se toma de la última posición de la línea con manejo seguro de NumberFormatException
             int puntuacion = 0;
             try {
-                puntuacion = Integer.parseInt(parts[parts.length - 1].trim());
+                puntuacion = Integer.parseInt(parts[parts.length - 2].trim());
             } catch (NumberFormatException e) {
-                puntuacion = 0; // Si el dato del texto no es numérico, se asigna 0 sin que crashee la App
+                puntuacion = 0;
             }
 
-            // Los usuarios guardados antes de existir este campo no lo traen: quedan en 0
-            int mejorIntentos = (parts.length >= 9) ? Integer.parseInt(parts[8].trim()) : 0;
+            int mejorIntentos = 0;
+            try {
+                mejorIntentos = Integer.parseInt(parts[parts.length - 1].trim());
+            } catch (NumberFormatException e) {
+                mejorIntentos = 0;
+            }
 
             return new Usuario(nombre, apellidos, correo, usuario, password, fechaNacimiento, foto, puntuacion, mejorIntentos);
         }

@@ -4,9 +4,12 @@ import model.Usuario;
 import model.GestorUsuarios;
 import controller.ControladorLogin;
 import controller.ControladorModoPatron;
+import controller.ReproductorSonido;
 import javax.sound.sampled.*;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.*;
+import java.awt.image.BufferedImage;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
@@ -14,10 +17,25 @@ import java.util.List;
 
 public class VentanaMenuPrincipal extends JFrame {
 
-    private static final int ANCHO_VENTANA = 800;
-    private static final int ALTO_VENTANA = 600;
+    private static final int ANCHO_VENTANA = 1280;
+    private static final int ALTO_VENTANA = 720;
+
+    // Medidas de los componentes del menú y su separación de las esquinas
+    private static final int MARGEN = 20;
+    private static final int ANCHO_BOTON = 260;
+    private static final int ALTO_BOTON = 50;
+    private static final int SEPARACION_BOTONES = 10;
+    private static final int ANCHO_LEADERBOARD = 260;
+    private static final int ALTO_LEADERBOARD = 260;
 
     private JPanel panelContenedor;
+    // La ventana puede achicarse hasta la mitad de su tamaño fijo, siempre con la misma proporción
+    private static final double ESCALA_MINIMA = 0.5;
+
+    private JPanel panelLeaderboard;
+    private Dimension tamanoFijo;
+    private Dimension baseContenido;      // Tamaño del área del menú con la ventana en su tamaño fijo
+    private double escalaTextoAplicada = -1;
     private Timer timerTransicion;
     private Timer timerParpadeo;
     private boolean introActiva = true;
@@ -58,8 +76,33 @@ public class VentanaMenuPrincipal extends JFrame {
         // Barra de menú superior: Ayuda a la izquierda y Cerrar sesión a la derecha
         crearBarraMenu();
         // La barra ocupa espacio, se suma su alto para conservar el área útil del menú
-        setSize(ANCHO_VENTANA, ALTO_VENTANA + barraMenu.getPreferredSize().height);
+        tamanoFijo = new Dimension(ANCHO_VENTANA, ALTO_VENTANA + barraMenu.getPreferredSize().height);
+        setSize(tamanoFijo);
+        setMinimumSize(new Dimension(
+                (int) Math.round(tamanoFijo.width * ESCALA_MINIMA),
+                (int) Math.round(tamanoFijo.height * ESCALA_MINIMA)));
         setLocationRelativeTo(null);
+
+        // La ventana no puede hacerse más grande que su tamaño fijo, pero sí más pequeña:
+        // al achicarla se conserva la proporción ancho/alto. Maximizar sigue funcionando.
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (esPantallaCompleta || estaMaximizada()) {
+                    return;
+                }
+                double escala = Math.min((double) getWidth() / tamanoFijo.width,
+                        (double) getHeight() / tamanoFijo.height);
+                escala = Math.max(ESCALA_MINIMA, Math.min(1.0, escala));
+                Dimension destino = new Dimension(
+                        (int) Math.round(tamanoFijo.width * escala),
+                        (int) Math.round(tamanoFijo.height * escala));
+
+                if (!getSize().equals(destino)) {
+                    setSize(destino);
+                }
+            }
+        });
 
         // 🎵 Iniciar música de fondo al abrir
         reproducirMusicaFondo("Recursos/Cancion/8 bits.wav");
@@ -123,6 +166,15 @@ public class VentanaMenuPrincipal extends JFrame {
 
         // Cargar puntuaciones iniciales
         actualizarTablaPuntuaciones();
+    }
+
+    // Indica si la ventana está maximizada (por estado, o porque ocupa toda el área útil de la pantalla)
+    private boolean estaMaximizada() {
+        if ((getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH) {
+            return true;
+        }
+        Rectangle area = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        return getWidth() >= area.width - 4 && getHeight() >= area.height - 4;
     }
 
     // Termina la intro (por tiempo o por tecla) y muestra el menú interactivo
@@ -276,16 +328,63 @@ public class VentanaMenuPrincipal extends JFrame {
                 }
             }
         };
-        panelContenedorCapas.setLayout(null);
-        panelContenedorCapas.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
+        // La capa de componentes ocupa siempre todo el panel, aunque la ventana se maximice
+        panelContenedorCapas.setLayout(new BorderLayout());
 
-        // Capa superior transparente para los botones y la tabla flotante
-        JPanel panelComponentesFlotantes = new JPanel(null);
+        // Capa superior transparente para la tabla flotante (izquierda) y los botones centrados.
+        JPanel panelComponentesFlotantes = new JPanel(null) {
+            @Override
+            public void doLayout() {
+                int ancho = getWidth();
+                int alto = getHeight();
+                if (ancho <= 0 || alto <= 0) {
+                    return;
+                }
+                if (baseContenido == null) {
+                    baseContenido = new Dimension(ancho, alto);
+                }
+
+                double escala = Math.min((double) ancho / baseContenido.width,
+                        (double) alto / baseContenido.height);
+                int margen = (int) Math.round(MARGEN * escala);
+
+                int anchoBoton = (int) Math.round(ANCHO_BOTON * escala);
+                int altoBoton = (int) Math.round(ALTO_BOTON * escala);
+                int separacion = (int) Math.round(SEPARACION_BOTONES * escala);
+
+                int anchoTabla = (int) Math.round(ANCHO_LEADERBOARD * escala);
+                int altoTabla = (int) Math.round(ALTO_LEADERBOARD * escala);
+
+                // 🏆 Tabla en la esquina inferior izquierda
+                if (panelLeaderboard != null) {
+                    panelLeaderboard.setBounds(margen, alto - altoTabla - margen, anchoTabla, altoTabla);
+                    aplicarEscalaTabla(escala);
+                }
+
+                // 📌 Posicionar los botones en el CENTRO HORIZONTAL y un poco más abajo de la zona superior/cascada
+                JButton[] botones = {btnLogin, btnBandera, btnPatron, btnMusica};
+                int altoColumna = botones.length * altoBoton + (botones.length - 1) * separacion;
+
+                // Centrado horizontal
+                int x = (ancho - anchoBoton) / 2;
+
+                // Ubicado en la parte central-baja (puedes ajustar el factor divisor si deseas subirlos o bajarlos más:
+                // por ejemplo (alto - altoColumna) / 2 + 50 los coloca ligeramente debajo del centro exacto).
+                int y = (alto - altoColumna) / 2 + 60;
+
+                for (JButton boton : botones) {
+                    if (boton != null) {
+                        boton.setBounds(x, y, anchoBoton, altoBoton);
+                        actualizarIconoBoton(boton, anchoBoton, altoBoton);
+                    }
+                    y += altoBoton + separacion;
+                }
+            }
+        };
         panelComponentesFlotantes.setOpaque(false);
-        panelComponentesFlotantes.setBounds(0, 0, ANCHO_VENTANA, ALTO_VENTANA);
 
         // 🏆 Tabla de Mejores Puntuaciones (Leaderboard transparente sin recuadro blanco)
-        JPanel panelLeaderboard = new JPanel(new BorderLayout()) {
+        panelLeaderboard = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 g.setColor(new Color(15, 25, 45, 180)); // Azul oscuro translúcido
@@ -294,11 +393,7 @@ public class VentanaMenuPrincipal extends JFrame {
             }
         };
         panelLeaderboard.setOpaque(false);
-        panelLeaderboard.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
-                " Top Jugadores ",
-                0, 0, new Font("Segoe UI", Font.BOLD, 14), Color.WHITE));
-        panelLeaderboard.setBounds(20, 270, 260, 260);
+        panelLeaderboard.setBorder(crearBordeLeaderboard(1.0));
 
         String[] columnas = {"Pos.", "Usuario", "Puntos"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
@@ -355,9 +450,8 @@ public class VentanaMenuPrincipal extends JFrame {
 
         // 📌 Botón 1: Iniciar Sesión (Dimensiones 260x50)
         btnLogin = crearBotonConImagen("Recursos/Registro.png", 260, 50);
-        btnLogin.setBounds(550, 290, 260, 50);
         btnLogin.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaLogin loginDialog = new VentanaLogin(this);
             new ControladorLogin(loginDialog); // Instancia del controlador MVC
             loginDialog.setVisible(true);
@@ -365,18 +459,16 @@ public class VentanaMenuPrincipal extends JFrame {
 
         // 📌 Botón 2: Encuentra la Pareja / Banderas
         btnBandera = crearBotonConImagen("Recursos/Memoria.png", 260, 50);
-        btnBandera.setBounds(550, 350, 260, 50);
         btnBandera.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
             ventanaParejas.setVisible(true);
         });
 
         // 📌 Botón 3: Siguiendo el Patrón
         btnPatron = crearBotonConImagen("Recursos/Patron.png", 260, 50);
-        btnPatron.setBounds(550, 410, 260, 50);
         btnPatron.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
             ControladorModoPatron controlador = new ControladorModoPatron(ventanaPatron);
             ventanaPatron.setVisible(true);
@@ -385,9 +477,8 @@ public class VentanaMenuPrincipal extends JFrame {
 
         // 📌 Botón 4: Control de Música / Silenciar
         btnMusica = crearBotonConImagen("Recursos/Musica.png", 260, 50);
-        btnMusica.setBounds(550, 470, 260, 50);
         btnMusica.addActionListener(e -> {
-            reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             alternarMusicaFondo();
         });
 
@@ -398,9 +489,52 @@ public class VentanaMenuPrincipal extends JFrame {
         panelComponentesFlotantes.add(btnPatron);
         panelComponentesFlotantes.add(btnMusica);
 
-        panelContenedorCapas.add(panelComponentesFlotantes);
+        panelContenedorCapas.add(panelComponentesFlotantes, BorderLayout.CENTER);
 
         return panelContenedorCapas;
+    }
+
+    // Borde dorado con título de la tabla de jugadores, con la letra ajustada a la escala
+    private Border crearBordeLeaderboard(double escala) {
+        int tamanoLetra = Math.max(8, (int) Math.round(14 * escala));
+
+        return BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
+                " Top Jugadores ",
+                0, 0, new Font("Segoe UI", Font.BOLD, tamanoLetra), Color.WHITE);
+    }
+
+    // Ajusta letras y alto de filas de la tabla a la escala actual de la ventana
+    private void aplicarEscalaTabla(double escala) {
+        if (Math.abs(escala - escalaTextoAplicada) < 0.01) {
+            return;
+        }
+        escalaTextoAplicada = escala;
+        int tamanoLetra = Math.max(7, (int) Math.round(12 * escala));
+
+        tablaPuntuaciones.setFont(new Font("Segoe UI", Font.PLAIN, tamanoLetra));
+        tablaPuntuaciones.setRowHeight(Math.max(10, (int) Math.round(24 * escala)));
+
+        tablaPuntuaciones.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, tamanoLetra));
+        panelLeaderboard.setBorder(crearBordeLeaderboard(escala));
+    }
+
+    // Reescala la imagen de un botón al tamaño indicado, a partir de la imagen original
+    private void actualizarIconoBoton(JButton boton, int ancho, int alto) {
+        Image original = (Image) boton.getClientProperty("imagenOriginal");
+        if (original == null || ancho <= 0 || alto <= 0) {
+            return;
+        }
+        Icon actual = boton.getIcon();
+        if (actual != null && actual.getIconWidth() == ancho && actual.getIconHeight() == alto) {
+            return;
+        }
+        BufferedImage escalada = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = escalada.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.drawImage(original, 0, 0, ancho, alto, null);
+        g2.dispose();
+        boton.setIcon(new ImageIcon(escalada));
     }
 
     /**
@@ -432,6 +566,8 @@ public class VentanaMenuPrincipal extends JFrame {
             if (iconoOriginal.getImage() != null) {
                 Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
                 boton.setIcon(new ImageIcon(imagenEscalada));
+                // Se guarda la imagen original para reescalarla cuando cambie el tamaño de la ventana
+                boton.putClientProperty("imagenOriginal", iconoOriginal.getImage());
             }
         } else {
             boton.setText("Botón");
@@ -457,20 +593,6 @@ public class VentanaMenuPrincipal extends JFrame {
                 clipMusicaFondo.open(audioStream);
                 clipMusicaFondo.loop(Clip.LOOP_CONTINUOUSLY);
                 clipMusicaFondo.start();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void reproducirEfectoSonido(String rutaAudio) {
-        try {
-            URL urlAudio = getClass().getClassLoader().getResource(rutaAudio);
-            if (urlAudio != null) {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlAudio);
-                Clip clipClick = AudioSystem.getClip();
-                clipClick.open(audioStream);
-                clipClick.start();
             }
         } catch (Exception e) {
             e.printStackTrace();

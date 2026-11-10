@@ -7,8 +7,6 @@ import view.VentanaModoPatron;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javax.sound.sampled.*;
-import java.net.URL;
 
 /**
  * Controlador del Modo Patrones.
@@ -51,6 +49,15 @@ public class ControladorModoPatron {
                 casillas[i][j].addActionListener(e -> alPresionarCasilla(fila, columna));
             }
         }
+
+        // Botón "Terminar intento": finaliza la partida en cualquier momento
+        vista.getBtnTerminarIntento().addActionListener(e -> {
+            if (juegoTerminado) {
+                return;
+            }
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+            terminarJuego("Terminaste el intento.");
+        });
 
         // Si se cierra la ventana, se detienen los tiempos
         vista.addWindowListener(new WindowAdapter() {
@@ -128,7 +135,7 @@ public class ControladorModoPatron {
         }
 
         // 🎵 Reproducir el sonido de clic al presionar cualquier casilla durante el turno del jugador
-        reproducirEfectoSonido("Recursos/Cancion/Botones/Presiona1.wav");
+        ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
 
         if (!logica.validarCasilla(fila, columna)) {
             terminarJuego("¡Casilla incorrecta!");
@@ -153,23 +160,6 @@ public class ControladorModoPatron {
             timerPausa.start();
         } else {
             reiniciarTimerEntreCasillas();
-        }
-    }
-
-    // Método auxiliar para reproducir efectos de sonido
-    private void reproducirEfectoSonido(String rutaAudio) {
-        try {
-            URL urlAudio = getClass().getClassLoader().getResource(rutaAudio);
-            if (urlAudio != null) {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlAudio);
-                Clip clipClick = AudioSystem.getClip();
-                clipClick.open(audioStream);
-                clipClick.start();
-            } else {
-                System.err.println("No se encontró el archivo de audio: " + rutaAudio);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -210,10 +200,32 @@ public class ControladorModoPatron {
             GestorUsuarios.actualizarPuntuacionUsuario(actual);
         }
 
-        JOptionPane.showMessageDialog(vista,
+        // Al terminar, el jugador elige entre volver a intentar o volver al menú principal
+        Object[] opciones = {"Volver a intentar", "Volver al menú principal"};
+        int eleccion = JOptionPane.showOptionDialog(vista,
                 mensaje + "\nPatrones completados: " + puntajeObtenido,
-                "Fin del juego", JOptionPane.INFORMATION_MESSAGE);
-        vista.dispose();
+                "Fin del juego",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]);
+
+        if (eleccion == 0) {
+            reiniciarPartida();
+        } else {
+            // Cerrar el diálogo con la X cuenta como volver al menú
+            vista.dispose();
+        }
+    }
+
+    // Empieza una partida nueva desde cero (patrón inicial de 3 casillas)
+    private void reiniciarPartida() {
+        detenerTimers();
+        juegoTerminado = false;
+        turnoJugador = false;
+        logica.iniciar();
+        mostrarPatron();
     }
 
     private void detenerTimers() {

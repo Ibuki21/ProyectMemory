@@ -1,5 +1,4 @@
 package view;
-import model.ConstructorFichas;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +41,7 @@ public class VentanaModoPatron extends JFrame {
     private JProgressBar barraTiempoTotal;
     private JProgressBar barraTiempoEntreCasillas;
     private JButton[][] botonesCasillas;
+    private JButton btnTerminarIntento;
 
     public VentanaModoPatron() {
         setTitle("Modo Patrones - Juegos de Memoria");
@@ -105,6 +105,15 @@ public class VentanaModoPatron extends JFrame {
         gbc.fill = GridBagConstraints.NONE;
         panelFondo.add(panelTablero, gbc);
 
+        // Botón para terminar el intento en cualquier momento (a la derecha del tablero)
+        btnTerminarIntento = new JButton("Terminar intento");
+        btnTerminarIntento.setFont(new Font("SansSerif", Font.BOLD, 13));
+        btnTerminarIntento.setFocusPainted(false);
+        btnTerminarIntento.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.SOUTHWEST;
+        panelFondo.add(btnTerminarIntento, gbc);
+
         setContentPane(panelFondo);
     }
 
@@ -143,5 +152,9 @@ public class VentanaModoPatron extends JFrame {
 
     public JButton[][] getBotonesCasillas() {
         return botonesCasillas;
+    }
+
+    public JButton getBtnTerminarIntento() {
+        return btnTerminarIntento;
     }
 }

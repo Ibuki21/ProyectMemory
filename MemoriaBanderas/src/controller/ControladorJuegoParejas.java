@@ -3,6 +3,7 @@ package controller;
 import model.GestorUsuarios;
 import model.JuegoParejasLogica;
 import model.Usuario;
+import model.ServicioCambioDolar;
 import view.JuegoParejasVisual;
 import view.VentanaLogin;
 import javax.swing.*;
@@ -75,11 +76,11 @@ public class ControladorJuegoParejas {
             }
         }
 
-        // Botón Finalizar intento: detiene la partida y pregunta si comenzar de nuevo o volver al menú
+        // Botón Finalizar intento: detiene la partida y pregunta si comenzar de nuevo o volver al menú[cite: 12]
         vista.getBtnFinalizar().addActionListener(e -> {
             if (juegoTerminado) return;
             ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
-            partida++; // Cancela cualquier jugada que estuviera por resolverse
+            partida++;
             juegoTerminado = true;
             bloqueandoClics = true;
             if (timerTurno != null) timerTurno.stop();
@@ -88,7 +89,6 @@ public class ControladorJuegoParejas {
         });
     }
 
-    // Pregunta qué hacer al terminar o finalizar una partida
     private void preguntarSiguientePaso() {
         Object[] opciones = {"Comenzar de nuevo", "Volver al menú principal"};
         int eleccion = JOptionPane.showOptionDialog(vista,
@@ -103,12 +103,10 @@ public class ControladorJuegoParejas {
         if (eleccion == 0) {
             reiniciarPartida();
         } else {
-            // Cerrar el diálogo con la X cuenta como volver al menú
             vista.dispose();
         }
     }
 
-    // Empieza una partida nueva con ambos tableros mezclados de nuevo
     private void reiniciarPartida() {
         partida++;
         if (timerTurno != null) timerTurno.stop();
@@ -123,22 +121,19 @@ public class ControladorJuegoParejas {
         vista.getLblIntentos2().setText("Intentos: 0");
         vista.getLblPares2().setText("Pares: 0 / 18");
 
-        // Restaura las cuadrículas eliminando los GIFs y volviendo a colocar los botones con nuevo orden
         vista.restaurarGridTablero(1);
         vista.restaurarGridTablero(2);
 
         iniciarFaseMemoria();
     }
 
-    // Ofrece registrar el puntaje (intentos) del jugador que ganó.
-    // - Jugador 1 con sesión abierta: se guarda directamente en esa sesión.
-    // - Jugador 1 sin sesión: debe iniciar sesión o registrarse (el registro inicia sesión solo).
-    // - Jugador 2: siempre debe iniciar sesión o registrarse, porque es otra persona;
-    //   si ya había una sesión abierta, esa sesión se conserva al terminar.
     private void ofrecerRegistroPuntaje(int jugador, int intentos) {
+        String nombreTablero = (jugador == 1) ? "Tablero 1 (Jugador 1)" : "Tablero 2 (Jugador 2)";
+
         int respuesta = JOptionPane.showConfirmDialog(vista,
-                "Jugador " + jugador + ", ganó con " + intentos + " intentos.\n¿Desea registrar su puntaje?",
-                "Registrar puntaje", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                nombreTablero + " ha completado el juego con " + intentos + " intentos.\n¿Desea registrar este puntaje?",
+                "Registrar puntaje - " + nombreTablero, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
         if (respuesta != JOptionPane.YES_OPTION) {
             return;
         }
@@ -149,9 +144,10 @@ public class ControladorJuegoParejas {
         if (jugador == 1 && sesionPrevia != null) {
             destino = sesionPrevia;
         } else {
-            if (sesionPrevia != null) {
-                GestorUsuarios.cerrarSesion(); // Para saber quién inicia sesión ahora
-            }
+            JOptionPane.showMessageDialog(vista,
+                    "Por favor, inicie sesión con la cuenta correspondiente al " + nombreTablero + ".",
+                    "Autenticación requerida", JOptionPane.INFORMATION_MESSAGE);
+
             VentanaLogin login = new VentanaLogin(vista);
             new ControladorLogin(login);
             login.setVisible(true);
@@ -159,22 +155,28 @@ public class ControladorJuegoParejas {
         }
 
         if (destino == null) {
-            GestorUsuarios.establecerSesion(sesionPrevia);
             JOptionPane.showMessageDialog(vista, "No se registró el puntaje porque no se inició sesión.",
                     "Puntaje no registrado", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
         boolean mejoro = destino.registrarIntentosParejas(intentos);
+        int puntosGanados = Math.max(10, 200 - (intentos * 2));
+        destino.agregarPuntos(puntosGanados);
         GestorUsuarios.actualizarPuntuacionUsuario(destino);
 
-        String mensaje = "Puntaje registrado para " + destino.getUsuario() + ": " + intentos + " intentos.";
-        if (!mejoro) {
-            mensaje += "\nSu mejor marca sigue siendo " + destino.getMejorIntentosParejas() + " intentos.";
-        }
-        JOptionPane.showMessageDialog(vista, mensaje, "Puntaje registrado", JOptionPane.INFORMATION_MESSAGE);
+        double premioColones = ServicioCambioDolar.calcularPremio(intentos);
 
-        // El jugador 2 no reemplaza una sesión que ya estaba abierta
+        String mensaje = "¡Puntaje registrado para " + destino.getUsuario() + " (" + nombreTablero + ")!\n" +
+                "• Intentos realizados: " + intentos + "\n" +
+                "• Premio estimado (BCCR): ₡" + String.format("%.2f", premioColones);
+
+        if (!mejoro) {
+            mensaje += "\n(Su mejor marca histórica en este modo sigue siendo: " + destino.getMejorIntentosParejas() + " intentos)";
+        }
+
+        JOptionPane.showMessageDialog(vista, mensaje, "Puntaje y Premio Registrado", JOptionPane.INFORMATION_MESSAGE);
+
         if (jugador == 2 && sesionPrevia != null) {
             GestorUsuarios.establecerSesion(sesionPrevia);
         }
@@ -328,8 +330,8 @@ public class ControladorJuegoParejas {
                 juegoTerminado = true;
                 if (timerTurno != null) timerTurno.stop();
 
-                cargarGifEnTablero(1, true);  // Carga Victoria.gif[cite: 1]
-                cargarGifEnTablero(2, false); // Carga Derrota.gif[cite: 1]
+                cargarGifEnTablero(1, true);  // Victoria.gif[cite: 1]
+                cargarGifEnTablero(2, false); // Derrota.gif[cite: 1]
 
                 vista.getLblTurno().setText("¡Jugador 1 completó su tablero primero!");
                 JOptionPane.showMessageDialog(vista, "¡El Jugador 1 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
@@ -339,8 +341,8 @@ public class ControladorJuegoParejas {
                 juegoTerminado = true;
                 if (timerTurno != null) timerTurno.stop();
 
-                cargarGifEnTablero(2, true);  // Carga Victoria.gif[cite: 1]
-                cargarGifEnTablero(1, false); // Carga Derrota.gif[cite: 1]
+                cargarGifEnTablero(2, true);  // Victoria.gif[cite: 1]
+                cargarGifEnTablero(1, false); // Derrota.gif[cite: 1]
 
                 vista.getLblTurno().setText("¡Jugador 2 completó su tablero primero!");
                 JOptionPane.showMessageDialog(vista, "¡El Jugador 2 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
@@ -373,7 +375,6 @@ public class ControladorJuegoParejas {
                 "¡Ambos tableros completados!\nJugador 1: " + intentos1 + " intentos\nJugador 2: " + intentos2 + " intentos",
                 "Fin del juego", JOptionPane.INFORMATION_MESSAGE);
 
-        // Gana quien usó menos intentos; si empatan, ambos pueden registrar su puntaje
         if (intentos1 <= intentos2) {
             ofrecerRegistroPuntaje(1, intentos1);
         }
@@ -384,9 +385,6 @@ public class ControladorJuegoParejas {
     }
 
     private void cargarGifEnTablero(int numTablero, boolean esVictoria) {
-        // Rutas exactas basadas en tu estructura:
-        // Victoria -> Recursos/Cancion/Ganaste/Victoria.gif[cite: 1]
-        // Derrota -> Recursos/Cancion/Perdiste/Derrota.gif[cite: 1]
         String rutaGif = esVictoria ?
                 "Recursos/Cancion/Ganaste/Victoria.gif" :
                 "Recursos/Cancion/Perdiste/Derrota.gif";

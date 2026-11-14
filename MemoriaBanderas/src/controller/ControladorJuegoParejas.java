@@ -14,6 +14,8 @@ import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ControladorJuegoParejas {
 
@@ -23,6 +25,11 @@ public class ControladorJuegoParejas {
 
     private static final String RUTA_PAREJAS = "Recursos/Parejas/";
     private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
+
+    // Las 18 imágenes ya leídas y escaladas: se cargan del disco una sola vez y se reutilizan
+    private static final Map<String, ImageIcon> CACHE_ICONOS = new HashMap<>();
+    private static final Font FUENTE_CARTA_OCULTA = new Font("Segoe UI", Font.BOLD, 18);
+    private static final Color COLOR_CARTA_OCULTA = new Color(30, 50, 80);
 
     private static final int TICK_MS = 100;
     private static final int TIEMPO_TURNO = 100;
@@ -413,7 +420,7 @@ public class ControladorJuegoParejas {
 
                 if (faseDeMemoria || logicaActiva.estaRevelada(indice) || estaTemporalmenteVolteada(logicaActiva, indice)) {
                     String nombreArchivo = logicaActiva.getCodigoCarta(indice);
-                    ImageIcon icono = cargarImagenEscalada(nombreArchivo, 55, 55);
+                    ImageIcon icono = obtenerIcono(nombreArchivo, 55, 55);
                     if (icono != null) {
                         btn.setIcon(icono);
                         btn.setText("");
@@ -425,9 +432,9 @@ public class ControladorJuegoParejas {
                 } else {
                     btn.setIcon(null);
                     btn.setText("❓");
-                    btn.setFont(new Font("Segoe UI", Font.BOLD, 18));
+                    btn.setFont(FUENTE_CARTA_OCULTA);
                     btn.setForeground(Color.WHITE);
-                    btn.setBackground(new Color(30, 50, 80));
+                    btn.setBackground(COLOR_CARTA_OCULTA);
                 }
             }
         }
@@ -435,6 +442,16 @@ public class ControladorJuegoParejas {
 
     private boolean estaTemporalmenteVolteada(JuegoParejasLogica logica, int indice) {
         return indice == logica.getIndicePrimeraSeleccion() || indice == logica.getIndiceSegundaSeleccion();
+    }
+
+    private ImageIcon obtenerIcono(String nombreArchivo, int ancho, int alto) {
+        String clave = nombreArchivo + "@" + ancho + "x" + alto;
+        if (CACHE_ICONOS.containsKey(clave)) {
+            return CACHE_ICONOS.get(clave);
+        }
+        ImageIcon icono = cargarImagenEscalada(nombreArchivo, ancho, alto);
+        CACHE_ICONOS.put(clave, icono);
+        return icono;
     }
 
     private ImageIcon cargarImagenEscalada(String nombreArchivo, int ancho, int alto) {

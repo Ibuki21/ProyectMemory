@@ -28,7 +28,7 @@ public class VentanaRegistro extends JDialog {
         setLocationRelativeTo(parent);
         setResizable(false);
 
-        VentanaLogin.PanelFondo panel = new VentanaLogin.PanelFondo("Recursos/Fondo1.jpg");
+        PanelFondo panel = new PanelFondo("Recursos/Fondo1.jpg");
         panel.setLayout(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         GridBagConstraints gbc = new GridBagConstraints();

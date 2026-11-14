@@ -5,9 +5,14 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
+import java.util.HashMap;
+import java.util.Map;
 
 // Construye las fichas (casillas) del Modo Patrones. El sonido de clic lo maneja el controlador.
 public class ConstructorFichas {
+
+    // Las banderas se leen del disco una sola vez, aunque se abra el modo varias veces
+    private static final Map<String, ImageIcon> CACHE_BANDERAS = new HashMap<>();
 
     private static final String RUTA_BANDERAS = "Recursos/w320/";
 
@@ -44,7 +49,13 @@ public class ConstructorFichas {
 
     private static JButton crearFicha(String codigoBandera) {
         JButton ficha = new JButton();
-        ImageIcon icono = cargarBandera(codigoBandera, ANCHO_BANDERA, ALTO_BANDERA);
+        ImageIcon icono;
+        if (CACHE_BANDERAS.containsKey(codigoBandera)) {
+            icono = CACHE_BANDERAS.get(codigoBandera);
+        } else {
+            icono = cargarBandera(codigoBandera, ANCHO_BANDERA, ALTO_BANDERA);
+            CACHE_BANDERAS.put(codigoBandera, icono);
+        }
         if (icono != null) {
             ficha.setIcon(icono);
         } else {

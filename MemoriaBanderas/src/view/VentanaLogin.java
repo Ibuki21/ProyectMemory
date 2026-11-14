@@ -1,37 +1,9 @@
 package view;
-import model.Usuario;
-import model.GestorUsuarios;
-import controller.ControladorLogin; // Si la vista abre el controlador
+
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
-import model.Usuario;
-import model.GestorUsuarios;
-import controller.ControladorLogin; // Si la vista abre el controlador
-import javax.swing.*;
-import java.awt.*;
-import java.net.URL;
 
 public class VentanaLogin extends JDialog {
-
-    static class PanelFondo extends JPanel {
-        private Image imagenFondo;
-
-        public PanelFondo(String ruta) {
-            URL urlImagen = getClass().getClassLoader().getResource(ruta);
-            if (urlImagen != null) {
-                imagenFondo = new ImageIcon(urlImagen).getImage();
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (imagenFondo != null) {
-                g.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), this);
-            }
-        }
-    }
 
     private JTextField txtIdentificador;
     private JPasswordField txtPassword;

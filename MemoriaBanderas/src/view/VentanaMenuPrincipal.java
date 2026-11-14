@@ -29,6 +29,8 @@ public class VentanaMenuPrincipal extends JFrame {
     private static final int ALTO_LEADERBOARD = 260;
 
     private JPanel panelContenedor;
+    private FondoAnimado fondoMenu;      // Fondo.gif del menú, decodificado una sola vez
+    private ImageIcon iconoIntro;        // VideoJuego.gif de la intro; se libera al terminar la intro
     // La ventana puede achicarse hasta la mitad de su tamaño fijo, siempre con la misma proporción
     private static final double ESCALA_MINIMA = 0.5;
 
@@ -107,6 +109,11 @@ public class VentanaMenuPrincipal extends JFrame {
         // 🎵 Iniciar música de fondo al abrir
         reproducirMusicaFondo("Recursos/Cancion/8 bits.wav");
 
+        // El fondo del menú se decodifica en segundo plano y se anima solo cuando el menú se ve
+        fondoMenu = new FondoAnimado("Recursos/Fondo.gif", () -> panelContenedor.repaint());
+        URL urlIntro = getClass().getClassLoader().getResource("Recursos/VideoJuego.gif");
+        iconoIntro = (urlIntro != null) ? new ImageIcon(urlIntro) : null;
+
         // Panel principal con CardLayout para cambiar entre la Intro y el Menú Interactivo
         panelContenedor = new JPanel(new CardLayout());
         setContentPane(panelContenedor);
@@ -156,16 +163,35 @@ public class VentanaMenuPrincipal extends JFrame {
             @Override
             public void windowActivated(WindowEvent e) {
                 actualizarTablaPuntuaciones();
+                if (!introActiva) {
+                    fondoMenu.reanudar();
+                }
+            }
+
+            // Con otra ventana encima (un juego, el login) o minimizada, el fondo no se anima
+            @Override
+            public void windowDeactivated(WindowEvent e) {
+                fondoMenu.pausar();
+            }
+
+            @Override
+            public void windowIconified(WindowEvent e) {
+                fondoMenu.pausar();
             }
 
             @Override
             public void windowClosed(WindowEvent e) {
+                fondoMenu.pausar();
                 detenerMusicaFondo();
             }
         });
 
         // Cargar puntuaciones iniciales
         actualizarTablaPuntuaciones();
+
+        // Preparar por adelantado el sonido de los clics y el tipo de cambio del BCCR (en segundo plano)
+        ReproductorSonido.precargar("Recursos/Cancion/Botones/Presiona1.wav");
+        model.ServicioCambioDolar.precargar();
     }
 
     // Indica si la ventana está maximizada (por estado, o porque ocupa toda el área útil de la pantalla)
@@ -187,6 +213,14 @@ public class VentanaMenuPrincipal extends JFrame {
         timerParpadeo.stop();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(despachadorTeclasIntro);
         ((CardLayout) panelContenedor.getLayout()).show(panelContenedor, "MENU");
+
+        // El GIF de la intro seguiría decodificándose en segundo plano aunque ya no se vea:
+        // flush() lo detiene y libera su memoria.
+        if (iconoIntro != null) {
+            iconoIntro.getImage().flush();
+            iconoIntro = null;
+        }
+        fondoMenu.reanudar();
         requestFocus(); // Conserva el foco para seguir capturando F11 y ESC
     }
 
@@ -265,9 +299,8 @@ public class VentanaMenuPrincipal extends JFrame {
                 g.setColor(Color.BLACK);
                 g.fillRect(0, 0, getWidth(), getHeight());
 
-                URL urlGif = getClass().getClassLoader().getResource(ruta);
-                if (urlGif != null) {
-                    ImageIcon iconoOriginal = new ImageIcon(urlGif);
+                ImageIcon iconoOriginal = iconoIntro;
+                if (iconoOriginal != null) {
                     Image imagen = iconoOriginal.getImage();
 
                     int anchoOriginal = iconoOriginal.getIconWidth();
@@ -317,15 +350,7 @@ public class VentanaMenuPrincipal extends JFrame {
         JPanel panelContenedorCapas = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                URL urlGif = getClass().getClassLoader().getResource("Recursos/Fondo.gif");
-                if (urlGif != null) {
-                    ImageIcon iconoOriginal = new ImageIcon(urlGif);
-                    g.drawImage(iconoOriginal.getImage(), 0, 0, getWidth(), getHeight(), this);
-                } else {
-                    g.setColor(new Color(20, 30, 50));
-                    g.fillRect(0, 0, getWidth(), getHeight());
-                }
+                fondoMenu.pintar(g, getWidth(), getHeight());
             }
         };
         // La capa de componentes ocupa siempre todo el panel, aunque la ventana se maximice

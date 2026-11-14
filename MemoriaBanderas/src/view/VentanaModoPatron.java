@@ -2,36 +2,8 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 
 public class VentanaModoPatron extends JFrame {
-
-    // Panel con imagen de fondo corregido para carga segura
-    static class PanelFondo extends JPanel {
-        private Image imagenFondo;
-
-        public PanelFondo(String ruta) {
-            URL urlImagen = getClass().getClassLoader().getResource(ruta);
-            if (urlImagen != null) {
-                imagenFondo = new ImageIcon(urlImagen).getImage();
-            } else {
-                URL urlAlternativa = getClass().getResource("/" + ruta);
-                if (urlAlternativa != null) {
-                    imagenFondo = new ImageIcon(urlAlternativa).getImage();
-                } else {
-                    System.err.println("No se pudo cargar la imagen de fondo: " + ruta);
-                }
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (imagenFondo != null) {
-                g.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), this);
-            }
-        }
-    }
 
     private static final int FILAS = 6;
     private static final int COLUMNAS = 6;

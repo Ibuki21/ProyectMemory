@@ -4,31 +4,8 @@ import controller.ControladorJuegoParejas;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.net.URL;
 
 public class JuegoParejasVisual extends JFrame {
-
-    static class PanelFondo extends JPanel {
-        private Image imagenFondo;
-
-        public PanelFondo(String ruta) {
-            URL urlImagen = getClass().getClassLoader().getResource(ruta);
-            if (urlImagen != null) {
-                imagenFondo = new ImageIcon(urlImagen).getImage();
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (imagenFondo != null) {
-                g.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), this);
-            } else {
-                g.setColor(new Color(30, 60, 110));
-                g.fillRect(0, 0, getWidth(), getHeight());
-            }
-        }
-    }
 
     private static final int FILAS = 6;
     private static final int COLUMNAS = 6;
@@ -50,6 +27,9 @@ public class JuegoParejasVisual extends JFrame {
     private JProgressBar barraTiempo;
 
     private JButton btnFinalizar;
+
+    // GIF de victoria/derrota que se muestra en cada tablero (posiciones 1 y 2)
+    private final ImageIcon[] gifsMostrados = new ImageIcon[3];
 
     public JuegoParejasVisual() {
         setTitle("Doble Desafío: Encuentra la Pareja (Modo Clásico 6x6)");
@@ -181,6 +161,8 @@ public class JuegoParejasVisual extends JFrame {
     }
 
     public void mostrarGifEnTablero(int numTablero, ImageIcon gifIcono) {
+        detenerGif(numTablero);
+        gifsMostrados[numTablero] = gifIcono;
         JPanel panelGrid = (numTablero == 1) ? panelGrid1 : panelGrid2;
         panelGrid.removeAll();
         panelGrid.setLayout(new BorderLayout());
@@ -191,7 +173,24 @@ public class JuegoParejasVisual extends JFrame {
         panelGrid.repaint();
     }
 
+    // Un GIF animado sigue decodificándose en segundo plano mientras alguien lo "observe",
+    // aunque ya no se vea. flush() lo detiene y libera sus recursos.
+    private void detenerGif(int numTablero) {
+        if (gifsMostrados[numTablero] != null) {
+            gifsMostrados[numTablero].getImage().flush();
+            gifsMostrados[numTablero] = null;
+        }
+    }
+
+    @Override
+    public void dispose() {
+        detenerGif(1);
+        detenerGif(2);
+        super.dispose();
+    }
+
     public void restaurarGridTablero(int numTablero) {
+        detenerGif(numTablero);
         JPanel panelGrid = (numTablero == 1) ? panelGrid1 : panelGrid2;
         panelGrid.removeAll();
         panelGrid.setLayout(new GridLayout(FILAS, COLUMNAS, 5, 5));

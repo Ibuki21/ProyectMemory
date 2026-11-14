@@ -1,273 +1,217 @@
 package controller;
 
+import model.GestorUsuarios;
 import model.LogicaPatron;
 import model.Usuario;
-import model.GestorUsuarios;
+import view.DialogoSeleccionJugador;
 import view.VentanaModoPatron;
-import javax.swing.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
-/**
- * Controlador del Modo Patrones.
- * Conecta la vista (VentanaModoPatron) con el modelo (LogicaPatron):
- * muestra el patrón, atiende los clics y maneja las barras de tiempo.
- */
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+
 public class ControladorModoPatron {
 
-    private static final int INTERVALO_MOSTRAR_MS = 500;   // Duración de cada casilla al mostrar el patrón
-    private static final int PAUSA_INICIAL_MS = 800;      // Pausa antes de mostrar un patrón
-    private static final int TICK_MS = 100;               // Las barras se actualizan cada 0.1 s
-    private static final int TIEMPO_TOTAL = 120;          // 12 segundos (en décimas)
-    private static final int TIEMPO_ENTRE_CASILLAS = 20;  // 2 segundos (en décimas)
+    private VentanaModoPatron vista;
+    private LogicaPatron modelo;
+    private Usuario jugadorActivo;
 
-    private final VentanaModoPatron vista;
-    private final LogicaPatron logica;
-    private final JButton[][] casillas;
-
-    private Timer timerMostrar;
+    private Timer timerMostrarPatron;
     private Timer timerTotal;
-    private Timer timerEntre;
-    private Timer timerPausa;
+    private Timer timerEntreCasillas;
 
-    private int pasoMostrar;
-    private int restanteTotal;
-    private int restanteEntre;
-    private boolean turnoJugador = false;
-    private boolean juegoTerminado = false;
+    private int pasoActualMostrar = 0;
+    private int segundosRestantesTotal = 120;
+    private int segundosRestantesCasilla = 20;
+
+    // Control de clics para evitar que se pongan grises al bloquear
+    private boolean tableroHabilitado = false;
+
+    private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
 
     public ControladorModoPatron(VentanaModoPatron vista) {
         this.vista = vista;
-        this.casillas = vista.getBotonesCasillas();
-        this.logica = new LogicaPatron(casillas.length, casillas[0].length);
+        this.modelo = new LogicaPatron(6, 6);
 
-        // Evento de cada casilla
-        for (int i = 0; i < casillas.length; i++) {
-            for (int j = 0; j < casillas[i].length; j++) {
-                final int fila = i;
-                final int columna = j;
-                casillas[i][j].addActionListener(e -> alPresionarCasilla(fila, columna));
-            }
-        }
+        // Evaluar jugadores para mostrar la selección si hay 2 cuentas activas
+        seleccionarJugadorParaPartida();
 
-        // Botón "Terminar intento": finaliza la partida en cualquier momento
-        vista.getBtnTerminarIntento().addActionListener(e -> {
-            if (juegoTerminado) {
-                return;
-            }
-            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
-            terminarJuego("Terminaste el intento.");
-        });
-
-        // Si se cierra la ventana, se detienen los tiempos
-        vista.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                detenerTimers();
-            }
-        });
+        initListeners();
     }
 
-    // Arranca la partida
-    public void iniciar() {
-        logica.iniciar();
-        mostrarPatron();
-    }
+    private void seleccionarJugadorParaPartida() {
+        List<Usuario> listaJugadores = GestorUsuarios.getUsuariosSesion();
 
-    // ---------- Mostrar el patrón ----------
+        if (listaJugadores.size() >= 2) {
+            DialogoSeleccionJugador dialogo = new DialogoSeleccionJugador(vista, listaJugadores);
+            dialogo.setVisible(true);
 
-    private void mostrarPatron() {
-        turnoJugador = false;
-        vista.quitarTodosLosResaltados();
-        vista.getLblCasillasPatron().setText("Casillas a recordar: " + logica.getLongitud());
-        actualizarBarraTotal(TIEMPO_TOTAL);
-        actualizarBarraEntre(TIEMPO_ENTRE_CASILLAS);
-
-        pasoMostrar = 0;
-        timerMostrar = new Timer(INTERVALO_MOSTRAR_MS, e -> pasoDeMuestra());
-        timerMostrar.setInitialDelay(PAUSA_INICIAL_MS);
-        timerMostrar.start();
-    }
-
-    // Cada paso par enciende una casilla del patrón y cada paso impar la apaga
-    private void pasoDeMuestra() {
-        int posicion = pasoMostrar / 2;
-        int fila = logica.getFila(posicion);
-        int columna = logica.getColumna(posicion);
-
-        if (pasoMostrar % 2 == 0) {
-            vista.resaltarCasilla(fila, columna);
+            jugadorActivo = dialogo.getJugadorSeleccionado();
+            if (jugadorActivo == null) {
+                jugadorActivo = listaJugadores.get(0);
+            }
+        } else if (listaJugadores.size() == 1) {
+            jugadorActivo = listaJugadores.get(0);
         } else {
-            vista.quitarResaltado(fila, columna);
-        }
-
-        pasoMostrar++;
-        if (pasoMostrar >= logica.getLongitud() * 2) {
-            timerMostrar.stop();
-            comenzarTurnoJugador();
+            jugadorActivo = GestorUsuarios.getUsuarioSesionActual();
         }
     }
 
-    // ---------- Turno del jugador ----------
+    public void iniciar() {
+        if (modelo != null && vista != null) {
+            modelo.reiniciarRonda();
+            actualizarEtiquetas();
+            bloquearTablero(true);
+            reproducirPatron();
+        }
+    }
 
-    private void comenzarTurnoJugador() {
-        logica.reiniciarIntento();
-        turnoJugador = true;
+    private void initListeners() {
+        if (vista == null || vista.getBotonesCasillas() == null) return;
 
-        // Barra de 12 segundos para replicar todo el patrón
-        restanteTotal = TIEMPO_TOTAL;
-        actualizarBarraTotal(restanteTotal);
-        actualizarBarraEntre(TIEMPO_ENTRE_CASILLAS);
+        JButton[][] botones = vista.getBotonesCasillas();
+        for (int i = 0; i < botones.length; i++) {
+            for (int j = 0; j < botones[i].length; j++) {
+                final int f = i;
+                final int c = j;
+                if (botones[i][j] != null) {
+                    botones[i][j].addActionListener(e -> {
+                        // Solo permite hacer clic si el tablero está habilitado para el jugador
+                        if (!tableroHabilitado) return;
+                        ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+                        verificarSeleccion(f, c);
+                    });
+                }
+            }
+        }
 
-        timerTotal = new Timer(TICK_MS, e -> {
-            restanteTotal--;
-            actualizarBarraTotal(restanteTotal);
-            if (restanteTotal <= 0) {
-                terminarJuego("¡Se acabó el tiempo total de 12 segundos!");
+        if (vista.getBtnTerminarIntento() != null) {
+            vista.getBtnTerminarIntento().addActionListener(e -> {
+                ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+                detenerTimers();
+                vista.dispose();
+            });
+        }
+    }
+
+    private void reproducirPatron() {
+        if (vista == null || modelo == null) return;
+
+        vista.quitarTodosLosResaltados();
+        pasoActualMostrar = 0;
+
+        List<int[]> secuencia = modelo.getSecuencia();
+
+        if (secuencia == null || secuencia.isEmpty()) {
+            bloquearTablero(false);
+            iniciarTimersJuego();
+            return;
+        }
+
+        final List<int[]> secuenciaFinal = secuencia;
+        timerMostrarPatron = new Timer(800, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                vista.quitarTodosLosResaltados();
+                if (pasoActualMostrar < secuenciaFinal.size()) {
+                    int[] coordenada = secuenciaFinal.get(pasoActualMostrar);
+                    if (coordenada != null && coordenada.length >= 2) {
+                        // 1. Mostrar la lucecita negra / resaltado en la vista
+                        vista.resaltarCasilla(coordenada[0], coordenada[1]);
+                        // 2. Reproducir el sonido de presionar botón en cada paso del patrón
+                        ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+                    }
+                    pasoActualMostrar++;
+                } else {
+                    timerMostrarPatron.stop();
+                    vista.quitarTodosLosResaltados();
+                    bloquearTablero(false); // Habilita el tablero manteniendo los colores reales
+                    iniciarTimersJuego();
+                }
+            }
+        });
+        timerMostrarPatron.start();
+    }
+
+    private void iniciarTimersJuego() {
+        segundosRestantesTotal = 120;
+        segundosRestantesCasilla = 20;
+
+        timerTotal = new Timer(1000, e -> {
+            segundosRestantesTotal--;
+            if (vista != null && vista.getBarraTiempoTotal() != null) {
+                vista.getBarraTiempoTotal().setValue(segundosRestantesTotal);
+                vista.getBarraTiempoTotal().setString("Tiempo total: " + (segundosRestantesTotal / 10) + " s");
+            }
+            if (segundosRestantesTotal <= 0) {
+                finalizarJuego();
             }
         });
         timerTotal.start();
-    }
 
-    private void alPresionarCasilla(int fila, int columna) {
-        if (!turnoJugador || juegoTerminado) {
-            return;
-        }
-
-        // 🎵 Reproducir el sonido de clic al presionar cualquier casilla durante el turno del jugador
-        ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
-
-        if (!logica.validarCasilla(fila, columna)) {
-            terminarJuego("¡Casilla incorrecta!");
-            return;
-        }
-
-        vista.resaltarCasilla(fila, columna);
-
-        if (logica.patronCompleto()) {
-            // Patrón correcto: se pasa al siguiente con 1 casilla más
-            detenerTimers();
-            turnoJugador = false;
-
-            if (!logica.puedeAvanzar()) {
-                terminarJuego("¡Completaste todos los patrones posibles!");
-                return;
+        timerEntreCasillas = new Timer(1000, e -> {
+            segundosRestantesCasilla--;
+            if (vista != null && vista.getBarraTiempoEntreCasillas() != null) {
+                vista.getBarraTiempoEntreCasillas().setValue(segundosRestantesCasilla);
+                vista.getBarraTiempoEntreCasillas().setString("Tiempo casilla: " + segundosRestantesCasilla + " s");
             }
-
-            logica.avanzarNivel();
-            timerPausa = new Timer(PAUSA_INICIAL_MS, e -> mostrarPatron());
-            timerPausa.setRepeats(false);
-            timerPausa.start();
-        } else {
-            reiniciarTimerEntreCasillas();
-        }
-    }
-
-    // Reinicia la barra de 2 segundos máximo entre una casilla y la siguiente
-    private void reiniciarTimerEntreCasillas() {
-        if (timerEntre != null) {
-            timerEntre.stop();
-        }
-        restanteEntre = TIEMPO_ENTRE_CASILLAS;
-        actualizarBarraEntre(restanteEntre);
-
-        timerEntre = new Timer(TICK_MS, e -> {
-            restanteEntre--;
-            actualizarBarraEntre(restanteEntre);
-            if (restanteEntre <= 0) {
-                terminarJuego("¡Pasaron más de 2 segundos entre casillas!");
+            if (segundosRestantesCasilla <= 0) {
+                finalizarJuego();
             }
         });
-        timerEntre.start();
+        timerEntreCasillas.start();
     }
 
-    // ---------- Fin de la partida ----------
+    private void verificarSeleccion(int f, int c) {
+        if (modelo == null || vista == null) return;
 
-    private void terminarJuego(String mensaje) {
-        if (juegoTerminado) {
-            return;
+        boolean acierto = modelo.verificarPaso(f, c);
+        if (acierto) {
+            segundosRestantesCasilla = 20;
+            if (modelo.esRondaCompletada()) {
+                detenerTimers();
+                JOptionPane.showMessageDialog(vista, "¡Patrón completado con éxito!", "Acierto", JOptionPane.INFORMATION_MESSAGE);
+                modelo.siguienteNivel();
+                iniciar();
+            }
+        } else {
+            detenerTimers();
+            JOptionPane.showMessageDialog(vista, "¡Fallaste el patrón!", "Game Over", JOptionPane.ERROR_MESSAGE);
+            finalizarJuego();
         }
-        juegoTerminado = true;
-        turnoJugador = false;
+    }
+
+    private void finalizarJuego() {
         detenerTimers();
 
-        int patronesCompletados = logica.getPatronesCompletados();
-
-        // 🧮 Aseguramos que al menos cuente como 1 para que la fórmula del API no devuelva 0
-        int puntajeParaFormula = Math.max(patronesCompletados, 1);
-
-        // Cálculo de puntos usando la fórmula del API del BCCR
-        double puntosCalculados = model.ServicioCambioDolar.calcularPremio(puntajeParaFormula);
-
-        // Si completó 0 patrones adicionales, le damos un puntaje base mínimo por participar (ej. 100 puntos + lo del API, o un valor fijo)
-        int puntosRedondeados = (int) Math.round(puntosCalculados);
-        if (patronesCompletados == 0) {
-            puntosRedondeados = 50; // Puntos de consolación por participar
+        if (jugadorActivo != null && modelo != null) {
+            int puntuacionObtenida = modelo.getPuntuacion();
+            if (puntuacionObtenida > jugadorActivo.getPuntuacionMaxima()) {
+                jugadorActivo.setPuntuacionMaxima(puntuacionObtenida);
+                GestorUsuarios.guardarUsuarios();
+            }
         }
-
-        Usuario actual = GestorUsuarios.getUsuarioSesionActual();
-        if (actual != null) {
-            // Suma los puntos nuevos de forma acumulativa al perfil
-            actual.agregarPuntos(puntosRedondeados);
-            GestorUsuarios.actualizarPuntuacionUsuario(actual); // Guarda en usuarios.txt
-            System.out.println("Puntos sumados exitosamente a " + actual.getUsuario() + ": +" + puntosRedondeados);
-        } else {
-            System.err.println("Error: No hay una sesión activa en GestorUsuarios al terminar el juego.");
-        }
-
-        // Mensaje limpio en pantalla
-        Object[] opciones = {"Volver a intentar", "Volver al menú principal"};
-        int eleccion = JOptionPane.showOptionDialog(vista,
-                mensaje + "\nPatrones completados: " + patronesCompletados +
-                        "\n⭐ ¡Puntos sumados a tu cuenta: +" + puntosRedondeados + "!",
-                "Fin del juego",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.INFORMATION_MESSAGE,
-                null,
-                opciones,
-                opciones[0]);
-
-        if (eleccion == 0) {
-            reiniciarPartida();
-        } else {
+        if (vista != null) {
             vista.dispose();
         }
     }
-    // Empieza una partida nueva desde cero (patrón inicial de 3 casillas)
-    private void reiniciarPartida() {
-        detenerTimers();
-        juegoTerminado = false;
-        turnoJugador = false;
-        logica.iniciar();
-        mostrarPatron();
+
+    private void bloquearTablero(boolean bloquear) {
+        // En lugar de usar setEnabled(false) que pone los botones grises,
+        // usamos una bandera booleana para conservar los colores vivos de las banderas.
+        tableroHabilitado = !bloquear;
     }
 
     private void detenerTimers() {
-        if (timerMostrar != null) {
-            timerMostrar.stop();
-        }
-        if (timerTotal != null) {
-            timerTotal.stop();
-        }
-        if (timerEntre != null) {
-            timerEntre.stop();
-        }
-        if (timerPausa != null) {
-            timerPausa.stop();
-        }
+        if (timerMostrarPatron != null) timerMostrarPatron.stop();
+        if (timerTotal != null) timerTotal.stop();
+        if (timerEntreCasillas != null) timerEntreCasillas.stop();
     }
 
-    // ---------- Barras de tiempo ----------
-
-    private void actualizarBarraTotal(int decimas) {
-        decimas = Math.max(decimas, 0);
-        vista.getBarraTiempoTotal().setValue(decimas);
-        vista.getBarraTiempoTotal().setString(String.format("Tiempo total: %.1f s", decimas / 10.0));
-    }
-
-    private void actualizarBarraEntre(int decimas) {
-        decimas = Math.max(decimas, 0);
-        vista.getBarraTiempoEntreCasillas().setValue(decimas);
-        vista.getBarraTiempoEntreCasillas().setString(String.format("Tiempo entre casillas: %.1f s", decimas / 10.0));
+    private void actualizarEtiquetas() {
+        if (vista != null && vista.getLblCasillasPatron() != null && modelo != null) {
+            vista.getLblCasillasPatron().setText("Casillas a recordar: " + modelo.getCantidadCasillas());
+        }
     }
 }

@@ -26,7 +26,6 @@ public class ControladorJuegoParejas {
     private static final String RUTA_PAREJAS = "Recursos/Parejas/";
     private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
 
-    // Las 18 imágenes ya leídas y escaladas: se cargan del disco una sola vez y se reutilizan
     private static final Map<String, ImageIcon> CACHE_ICONOS = new HashMap<>();
     private static final Font FUENTE_CARTA_OCULTA = new Font("Segoe UI", Font.BOLD, 18);
     private static final Color COLOR_CARTA_OCULTA = new Color(30, 50, 80);
@@ -83,7 +82,6 @@ public class ControladorJuegoParejas {
             }
         }
 
-        // Botón Finalizar intento: detiene la partida y pregunta si comenzar de nuevo o volver al menú[cite: 12]
         vista.getBtnFinalizar().addActionListener(e -> {
             if (juegoTerminado) return;
             ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
@@ -168,7 +166,10 @@ public class ControladorJuegoParejas {
         }
 
         boolean mejoro = destino.registrarIntentosParejas(intentos);
+
+        // CORRECCIÓN: Se agregó el operador de multiplicación faltante (*)
         int puntosGanados = Math.max(10, 200 - (intentos * 2));
+
         destino.agregarPuntos(puntosGanados);
         GestorUsuarios.actualizarPuntuacionUsuario(destino);
 
@@ -337,22 +338,22 @@ public class ControladorJuegoParejas {
                 juegoTerminado = true;
                 if (timerTurno != null) timerTurno.stop();
 
-                cargarGifEnTablero(1, true);  // Victoria.gif[cite: 1]
-                cargarGifEnTablero(2, false); // Derrota.gif[cite: 1]
+                cargarGifEnTablero(1, true);
+                cargarGifEnTablero(2, false);
 
                 vista.getLblTurno().setText("¡Jugador 1 completó su tablero primero!");
-                JOptionPane.showMessageDialog(vista, "¡El Jugador 1 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(vista, "¡El Jugador 1 ganó al completar todas suas parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
                 ofrecerRegistroPuntaje(1, logica1.getIntentos());
                 preguntarSiguientePaso();
             } else if (gano2) {
                 juegoTerminado = true;
                 if (timerTurno != null) timerTurno.stop();
 
-                cargarGifEnTablero(2, true);  // Victoria.gif[cite: 1]
-                cargarGifEnTablero(1, false); // Derrota.gif[cite: 1]
+                cargarGifEnTablero(2, true);
+                cargarGifEnTablero(1, false);
 
                 vista.getLblTurno().setText("¡Jugador 2 completó su tablero primero!");
-                JOptionPane.showMessageDialog(vista, "¡El Jugador 2 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(vista, "¡El Jugador 2 ganó al completar todas suas parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
                 ofrecerRegistroPuntaje(2, logica2.getIntentos());
                 preguntarSiguientePaso();
             }

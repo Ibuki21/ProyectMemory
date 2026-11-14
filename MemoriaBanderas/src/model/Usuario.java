@@ -1,47 +1,52 @@
 package model;
-import java.io.File;
 
-public class Usuario {
+import java.io.Serializable;
+
+public class Usuario implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String nombre;
     private String apellidos;
     private String correo;
     private String usuario;
     private String password;
-    private String fechaNacimiento;
-    private File fotoPerfil;
+    private String fechaNac;
+    private String archivoFoto;
+
     private int puntuacionMaxima;
     private int mejorIntentosParejas;
+    private int puntos;
 
-    public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil) {
-        this.nombre = nombre;
-        this.apellidos = apellidos;
+    // 1. Constructor básico (3 parámetros)
+    public Usuario(String usuario, String correo, String password) {
+        this.nombre = "";
+        this.apellidos = "";
         this.correo = correo;
         this.usuario = usuario;
         this.password = password;
-        this.fechaNacimiento = fechaNacimiento;
-        this.fotoPerfil = fotoPerfil;
+        this.fechaNac = "";
+        this.archivoFoto = "";
         this.puntuacionMaxima = 0;
-        this.mejorIntentosParejas = 0;
+        this.mejorIntentosParejas = 999;
+        this.puntos = 0;
     }
 
-    public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil, int puntuacionMaxima) {
-        this(nombre, apellidos, correo, usuario, password, fechaNacimiento, fotoPerfil, puntuacionMaxima, 0);
+    // 2. Constructor flexible (Acepta Object en fecha y foto para evitar errores de tipo File, Date o String)
+    public Usuario(String nombre, String apellidos, String correo, String usuario, String password, Object fechaNac, Object archivoFoto) {
+        this.nombre = nombre != null ? nombre.toString() : "";
+        this.apellidos = apellidos != null ? apellidos.toString() : "";
+        this.correo = correo != null ? correo.toString() : "";
+        this.usuario = usuario != null ? usuario.toString() : "";
+        this.password = password != null ? password.toString() : "";
+        this.fechaNac = fechaNac != null ? fechaNac.toString() : "";
+        this.archivoFoto = archivoFoto != null ? archivoFoto.toString() : "";
+
+        this.puntuacionMaxima = 0;
+        this.mejorIntentosParejas = 999;
+        this.puntos = 0;
     }
 
-    public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil, int puntuacionMaxima, int mejorIntentosParejas) {
-        this.nombre = nombre;
-        this.apellidos = apellidos;
-        this.correo = correo;
-        this.usuario = usuario;
-        this.password = password;
-        this.fechaNacimiento = fechaNacimiento;
-        this.fotoPerfil = fotoPerfil;
-        this.puntuacionMaxima = puntuacionMaxima;
-        this.mejorIntentosParejas = mejorIntentosParejas;
-    }
-
-    // --- Getters y Setters ---
-
+    // Getters y Setters
     public String getNombre() {
         return nombre;
     }
@@ -82,33 +87,28 @@ public class Usuario {
         this.password = password;
     }
 
-    public String getFechaNacimiento() {
-        return fechaNacimiento;
+    public String getFechaNac() {
+        return fechaNac;
     }
 
-    public void setFechaNacimiento(String fechaNacimiento) {
-        this.fechaNacimiento = fechaNacimiento;
+    public void setFechaNac(String fechaNac) {
+        this.fechaNac = fechaNac;
     }
 
-    public File getFotoPerfil() {
-        return fotoPerfil;
+    public String getArchivoFoto() {
+        return archivoFoto;
     }
 
-    public void setFotoPerfil(File fotoPerfil) {
-        this.fotoPerfil = fotoPerfil;
+    public void setArchivoFoto(String archivoFoto) {
+        this.archivoFoto = archivoFoto;
     }
 
     public int getPuntuacionMaxima() {
         return puntuacionMaxima;
     }
 
-    public void setPuntuacionMaxima(int puntuacion) {
-        this.puntuacionMaxima = puntuacion;
-    }
-
-    // Acumula los puntos nuevos sumándolos al total actual de forma persistente
-    public void agregarPuntos(int puntosNuevos) {
-        this.puntuacionMaxima += puntosNuevos;
+    public void setPuntuacionMaxima(int puntuacionMaxima) {
+        this.puntuacionMaxima = puntuacionMaxima;
     }
 
     public int getMejorIntentosParejas() {
@@ -116,52 +116,18 @@ public class Usuario {
     }
 
     public boolean registrarIntentosParejas(int intentos) {
-        if (intentos <= 0) {
-            return false;
-        }
-        if (mejorIntentosParejas == 0 || intentos < mejorIntentosParejas) {
+        if (intentos < mejorIntentosParejas) {
             mejorIntentosParejas = intentos;
             return true;
         }
         return false;
     }
 
-    // --- Métodos de Persistencia en Archivo de Texto ---
-
-    public String toFileString() {
-        String rutaFoto = (fotoPerfil != null) ? fotoPerfil.getPath().replace(",", "_") : "null";
-        return nombre + "," + apellidos + "," + correo + "," + usuario + "," + password + "," + fechaNacimiento + "," + rutaFoto + "," + puntuacionMaxima + "," + mejorIntentosParejas;
+    public int getPuntos() {
+        return puntos;
     }
 
-    public static Usuario fromFileString(String line) {
-        String[] parts = line.split(",");
-        if (parts.length >= 9) {
-            String nombre = parts[0].trim();
-            String apellidos = parts[1].trim();
-            String correo = parts[2].trim();
-            String usuario = parts[3].trim();
-            String password = parts[4].trim();
-            String fechaNacimiento = parts[5].trim();
-
-            String rutaFoto = parts[6].trim();
-            File foto = (rutaFoto.equals("null") || rutaFoto.isEmpty()) ? null : new File(rutaFoto);
-
-            int puntuacion = 0;
-            try {
-                puntuacion = Integer.parseInt(parts[parts.length - 2].trim());
-            } catch (NumberFormatException e) {
-                puntuacion = 0;
-            }
-
-            int mejorIntentos = 0;
-            try {
-                mejorIntentos = Integer.parseInt(parts[parts.length - 1].trim());
-            } catch (NumberFormatException e) {
-                mejorIntentos = 0;
-            }
-
-            return new Usuario(nombre, apellidos, correo, usuario, password, fechaNacimiento, foto, puntuacion, mejorIntentos);
-        }
-        return null;
+    public void agregarPuntos(int puntosAdicionales) {
+        this.puntos += puntosAdicionales;
     }
 }

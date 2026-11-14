@@ -226,8 +226,7 @@ public class VentanaMenuPrincipal extends JFrame {
             return;
         }
         GestorUsuarios.cerrarSesion();
-        JOptionPane.showMessageDialog(this, "Sesión cerrada. Hasta pronto, " + actual.getNombre() + ".",
-                "Cerrar sesión", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Sesión cerrada. Nos vemos pronto, " + actual.getUsuario() + ".", "Sesión Cerrada", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void alternarPantallaCompleta() {

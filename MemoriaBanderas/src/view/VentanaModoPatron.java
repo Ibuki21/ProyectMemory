@@ -1,5 +1,6 @@
 package view;
 
+import controller.GestorMusica;
 import javax.swing.*;
 import java.awt.*;
 
@@ -21,6 +22,15 @@ public class VentanaModoPatron extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        // 🎵 Cambiar a AC-DC.wav al abrir y restaurar 8 bits.wav al cerrar
+        GestorMusica.reproducir("Recursos/Cancion/AC-DC.wav");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                GestorMusica.reproducir("Recursos/Cancion/8 bits.wav");
+            }
+        });
+
         PanelFondo panelFondo = new PanelFondo("Recursos/Fondo1.png");
         panelFondo.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -28,7 +38,6 @@ public class VentanaModoPatron extends JFrame {
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Título
         lblTitulo = new JLabel("=== MODO PATRONES ===");
         lblTitulo.setForeground(Color.WHITE);
         lblTitulo.setFont(new Font("Monospaced", Font.BOLD, 18));
@@ -36,7 +45,6 @@ public class VentanaModoPatron extends JFrame {
         gbc.gridy = 0;
         panelFondo.add(lblTitulo, gbc);
 
-        // Cantidad de casillas del patrón actual (inicia en 3)
         lblCasillasPatron = new JLabel("Casillas a recordar: 3");
         lblCasillasPatron.setForeground(Color.WHITE);
         lblCasillasPatron.setFont(new Font("SansSerif", Font.BOLD, 14));
@@ -44,7 +52,6 @@ public class VentanaModoPatron extends JFrame {
         gbc.gridy = 1;
         panelFondo.add(lblCasillasPatron, gbc);
 
-        // Barra de tiempo total para replicar el patrón (12 segundos = 120 décimas)
         barraTiempoTotal = new JProgressBar(0, 120);
         barraTiempoTotal.setValue(120);
         barraTiempoTotal.setStringPainted(true);
@@ -53,7 +60,6 @@ public class VentanaModoPatron extends JFrame {
         gbc.gridy = 2;
         panelFondo.add(barraTiempoTotal, gbc);
 
-        // Barra de tiempo entre casillas (2 segundos = 20 décimas)
         barraTiempoEntreCasillas = new JProgressBar(0, 20);
         barraTiempoEntreCasillas.setValue(20);
         barraTiempoEntreCasillas.setStringPainted(true);
@@ -62,7 +68,6 @@ public class VentanaModoPatron extends JFrame {
         gbc.gridy = 3;
         panelFondo.add(barraTiempoEntreCasillas, gbc);
 
-        // Matriz de casillas 6x6 (las fichas las construye ConstructorFichas)
         JPanel panelTablero = new JPanel(new GridLayout(FILAS, COLUMNAS, 6, 6));
         panelTablero.setOpaque(false);
         botonesCasillas = ConstructorFichas.crearMatrizFichas(FILAS, COLUMNAS);
@@ -77,7 +82,6 @@ public class VentanaModoPatron extends JFrame {
         gbc.fill = GridBagConstraints.NONE;
         panelFondo.add(panelTablero, gbc);
 
-        // Botón para terminar el intento en cualquier momento (a la derecha del tablero)
         btnTerminarIntento = new JButton("Terminar intento");
         btnTerminarIntento.setFont(new Font("SansSerif", Font.BOLD, 13));
         btnTerminarIntento.setFocusPainted(false);
@@ -89,19 +93,16 @@ public class VentanaModoPatron extends JFrame {
         setContentPane(panelFondo);
     }
 
-    // Resalta una casilla (la usa el controlador al mostrar el patrón y al hacer clic)
     public void resaltarCasilla(int fila, int columna) {
         botonesCasillas[fila][columna].setBackground(Color.BLACK);
         botonesCasillas[fila][columna].setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
     }
 
-    // Devuelve una casilla a su aspecto normal
     public void quitarResaltado(int fila, int columna) {
         botonesCasillas[fila][columna].setBackground(UIManager.getColor("Button.background"));
         botonesCasillas[fila][columna].setBorder(UIManager.getBorder("Button.border"));
     }
 
-    // Devuelve todas las casillas a su aspecto normal
     public void quitarTodosLosResaltados() {
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
@@ -110,23 +111,9 @@ public class VentanaModoPatron extends JFrame {
         }
     }
 
-    public JLabel getLblCasillasPatron() {
-        return lblCasillasPatron;
-    }
-
-    public JProgressBar getBarraTiempoTotal() {
-        return barraTiempoTotal;
-    }
-
-    public JProgressBar getBarraTiempoEntreCasillas() {
-        return barraTiempoEntreCasillas;
-    }
-
-    public JButton[][] getBotonesCasillas() {
-        return botonesCasillas;
-    }
-
-    public JButton getBtnTerminarIntento() {
-        return btnTerminarIntento;
-    }
+    public JLabel getLblCasillasPatron() { return lblCasillasPatron; }
+    public JProgressBar getBarraTiempoTotal() { return barraTiempoTotal; }
+    public JProgressBar getBarraTiempoEntreCasillas() { return barraTiempoEntreCasillas; }
+    public JButton[][] getBotonesCasillas() { return botonesCasillas; }
+    public JButton getBtnTerminarIntento() { return btnTerminarIntento; }
 }

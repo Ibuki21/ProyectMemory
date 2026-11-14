@@ -1,6 +1,7 @@
 package view;
 
 import controller.ControladorJuegoParejas;
+import controller.GestorMusica;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -10,25 +11,20 @@ public class JuegoParejasVisual extends JFrame {
     private static final int FILAS = 6;
     private static final int COLUMNAS = 6;
 
-    // Componentes Tablero 1
     private JButton[][] botonesTablero1;
     private JLabel lblIntentos1, lblPares1;
     private JPanel panelSubTablero1;
     private JPanel panelGrid1;
 
-    // Componentes Tablero 2
     private JButton[][] botonesTablero2;
     private JLabel lblIntentos2, lblPares2;
     private JPanel panelSubTablero2;
     private JPanel panelGrid2;
 
-    // Turno y tiempo de la jugada
     private JLabel lblTurno;
     private JProgressBar barraTiempo;
-
     private JButton btnFinalizar;
 
-    // GIF de victoria/derrota que se muestra en cada tablero (posiciones 1 y 2)
     private final ImageIcon[] gifsMostrados = new ImageIcon[3];
 
     public JuegoParejasVisual() {
@@ -38,11 +34,19 @@ public class JuegoParejasVisual extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
+        // 🎵 Cambiar a AC-DC.wav al abrir y restaurar 8 bits.wav al cerrar
+        GestorMusica.reproducir("Recursos/Cancion/AC-DC.wav");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                GestorMusica.reproducir("Recursos/Cancion/8 bits.wav");
+            }
+        });
+
         PanelFondo panelFondo = new PanelFondo("Recursos/Fondo1.jpg");
         panelFondo.setLayout(new BorderLayout(10, 10));
         panelFondo.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // --- Parte superior ---
         JPanel panelSuperior = new JPanel(new GridLayout(3, 1, 0, 4));
         panelSuperior.setOpaque(false);
 
@@ -69,7 +73,6 @@ public class JuegoParejasVisual extends JFrame {
 
         panelFondo.add(panelSuperior, BorderLayout.NORTH);
 
-        // --- Panel Central con los Dos Tableros Lado a Lado ---
         JPanel panelContenedorTableros = new JPanel(new GridLayout(1, 2, 20, 0));
         panelContenedorTableros.setOpaque(false);
 
@@ -81,7 +84,6 @@ public class JuegoParejasVisual extends JFrame {
 
         panelFondo.add(panelContenedorTableros, BorderLayout.CENTER);
 
-        // --- Panel Inferior ---
         JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panelInferior.setOpaque(false);
         btnFinalizar = new JButton("Finalizar intento");
@@ -125,7 +127,6 @@ public class JuegoParejasVisual extends JFrame {
         panelStats.add(lblPares);
         panelSub.add(panelStats, BorderLayout.NORTH);
 
-        // Matriz 6x6 adaptada al espacio visual
         JPanel panelGrid = new JPanel(new GridLayout(FILAS, COLUMNAS, 5, 5));
         panelGrid.setOpaque(false);
 
@@ -173,8 +174,6 @@ public class JuegoParejasVisual extends JFrame {
         panelGrid.repaint();
     }
 
-    // Un GIF animado sigue decodificándose en segundo plano mientras alguien lo "observe",
-    // aunque ya no se vea. flush() lo detiene y libera sus recursos.
     private void detenerGif(int numTablero) {
         if (gifsMostrados[numTablero] != null) {
             gifsMostrados[numTablero].getImage().flush();

@@ -1,19 +1,29 @@
 package model;
-
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class GestorUsuarios {
-    private static final String ARCHIVO_DATOS = "usuarios.dat";
-    private static List<Usuario> listaUsuarios = new ArrayList<>();
+    private static final String RUTA_ARCHIVO = "usuarios.txt";
     private static Usuario usuarioSesionActual = null;
 
-    // Lista de sesión para controlar hasta 2 jugadores activos en minijuegos
+    // 👥 Mínimo agregado: Lista para controlar hasta 2 jugadores activos simultáneos en los minijuegos
     private static final List<Usuario> usuariosSesion = new ArrayList<>();
 
     static {
-        cargarUsuarios();
+        crearArchivoSiNoExiste();
+    }
+
+    private static void crearArchivoSiNoExiste() {
+        File file = new File(RUTA_ARCHIVO);
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+        } catch (IOException e) {
+            System.err.println("Error al inicializar el archivo de usuarios: " + e.getMessage());
+        }
     }
 
     public static void registrarLoginSesion(Usuario usuario) {
@@ -24,49 +34,52 @@ public class GestorUsuarios {
         }
     }
 
-    public static void establecerSesion(Usuario usuario) {
-        usuarioSesionActual = usuario;
-        registrarLoginSesion(usuario);
-    }
-
-    // Método para guardar cambios de puntaje o perfil
-    public static void actualizarPuntuacionUsuario(Usuario usuario) {
-        if (usuario != null) {
-            guardarUsuarios();
-        }
-    }
-
-    // Método para actualizar puntuación con valor explícito
-    public static void actualizarPuntuacionUsuario(Usuario usuario, int nuevaPuntuacion) {
-        if (usuario != null) {
-            if (nuevaPuntuacion > usuario.getPuntuacionMaxima()) {
-                usuario.setPuntuacionMaxima(nuevaPuntuacion);
-            }
-            guardarUsuarios();
-        }
-    }
-
     public static List<Usuario> getUsuariosSesion() {
         return usuariosSesion;
     }
 
-    public static boolean registrarUsuario(Usuario nuevoUsuario) {
-        for (Usuario u : listaUsuarios) {
-            if (u.getUsuario().equalsIgnoreCase(nuevoUsuario.getUsuario()) ||
-                    u.getCorreo().equalsIgnoreCase(nuevoUsuario.getCorreo())) {
-                return false; // Ya existe
+    public static List<Usuario> cargarUsuarios() {
+        List<Usuario> lista = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(RUTA_ARCHIVO))) {
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                if (!linea.trim().isEmpty()) {
+                    Usuario u = Usuario.fromFileString(linea);
+                    if (u != null) {
+                        lista.add(u);
+                    }
+                }
             }
+        } catch (IOException e) {
+            System.err.println("Error al cargar usuarios desde archivo: " + e.getMessage());
         }
-        listaUsuarios.add(nuevoUsuario);
-        guardarUsuarios(); // Guarda inmediatamente en disco
-        System.out.println("Usuario registrado y guardado en disco: " + nuevoUsuario.getUsuario());
-        return true;
+        return lista;
     }
 
-    public static Usuario iniciarSesion(String identificador, String password) {
-        for (Usuario u : listaUsuarios) {
-            if ((u.getUsuario().equalsIgnoreCase(identificador) || u.getCorreo().equalsIgnoreCase(identificador)) &&
-                    u.getPassword().equals(password)) {
+    public static boolean registrarUsuario(Usuario nuevoUsuario) {
+        List<Usuario> usuariosActu = cargarUsuarios();
+        for (Usuario u : usuariosActu) {
+            if (u.getCorreo().equalsIgnoreCase(nuevoUsuario.getCorreo()) ||
+                    u.getUsuario().equalsIgnoreCase(nuevoUsuario.getUsuario())) {
+                return false;
+            }
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(RUTA_ARCHIVO, true))) {
+            writer.write(nuevoUsuario.toFileString());
+            writer.newLine();
+            return true;
+        } catch (IOException e) {
+            System.err.println("Error al guardar usuario en archivo: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static Usuario validarCredenciales(String identificador, String password) {
+        List<Usuario> usuarios = cargarUsuarios();
+        for (Usuario u : usuarios) {
+            if ((u.getCorreo().equalsIgnoreCase(identificador) || u.getUsuario().equalsIgnoreCase(identificador))
+                    && u.getPassword().equals(password)) {
                 usuarioSesionActual = u;
                 registrarLoginSesion(u);
                 return u;
@@ -75,45 +88,86 @@ public class GestorUsuarios {
         return null;
     }
 
-    public static void cerrarSesion() {
-        usuarioSesionActual = null;
-        usuariosSesion.clear();
+    // 🔗 Alias de compatibilidad para que controladores antiguos llamen a iniciarSesion sin error
+    public static Usuario iniciarSesion(String identificador, String password) {
+        return validarCredenciales(identificador, password);
+    }
+
+    public static boolean existeUsuario(String identificador) {
+        List<Usuario> usuarios = cargarUsuarios();
+        for (Usuario u : usuarios) {
+            if (u.getCorreo().equalsIgnoreCase(identificador) || u.getUsuario().equalsIgnoreCase(identificador)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void actualizarPuntuacionUsuario(Usuario usuarioActualizado) {
+        List<Usuario> usuarios = cargarUsuarios();
+        boolean actualizado = false;
+
+        for (int i = 0; i < usuarios.size(); i++) {
+            Usuario u = usuarios.get(i);
+            if (u.getUsuario().equalsIgnoreCase(usuarioActualizado.getUsuario())) {
+                usuarios.set(i, usuarioActualizado);
+                actualizado = true;
+                break;
+            }
+        }
+
+        if (actualizado) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(RUTA_ARCHIVO, false))) {
+                for (Usuario u : usuarios) {
+                    writer.write(u.toFileString());
+                    writer.newLine();
+                }
+            } catch (IOException e) {
+                System.err.println("Error al reescribir puntuaciones en archivo: " + e.getMessage());
+            }
+
+            if (usuarioSesionActual != null && usuarioSesionActual.getUsuario().equalsIgnoreCase(usuarioActualizado.getUsuario())) {
+                usuarioSesionActual = usuarioActualizado;
+            }
+        }
+    }
+
+    // 🔗 Sobrecarga de compatibilidad para actualizar por entero directo
+    public static void actualizarPuntuacionUsuario(Usuario usuario, int nuevaPuntuacion) {
+        if (usuario != null) {
+            usuario.agregarPuntos(nuevaPuntuacion);
+            actualizarPuntuacionUsuario(usuario);
+        }
     }
 
     public static Usuario getUsuarioSesionActual() {
         return usuarioSesionActual;
     }
 
-    public static List<Usuario> getMejoresPuntuaciones() {
-        List<Usuario> copia = new ArrayList<>(listaUsuarios);
-        copia.sort((u1, u2) -> Integer.compare(u2.getPuntuacionMaxima(), u1.getPuntuacionMaxima()));
-        return copia;
+    public static void cerrarSesion() {
+        usuarioSesionActual = null;
+        usuariosSesion.clear();
     }
 
-    public static void guardarUsuarios() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ARCHIVO_DATOS))) {
-            oos.writeObject(listaUsuarios);
-            System.out.println("Archivo usuarios.dat guardado correctamente. Total usuarios: " + listaUsuarios.size());
-        } catch (IOException e) {
-            System.err.println("Error al guardar usuarios.dat: " + e.getMessage());
-            e.printStackTrace();
+    public static void establecerSesion(Usuario usuario) {
+        if (usuario == null) {
+            usuarioSesionActual = null;
+            return;
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    public static void cargarUsuarios() {
-        File archivo = new File(ARCHIVO_DATOS);
-        if (archivo.exists()) {
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(archivo))) {
-                listaUsuarios = (List<Usuario>) ois.readObject();
-                System.out.println("¡Usuarios cargados con éxito desde usuarios.dat! Total: " + listaUsuarios.size());
-            } catch (Exception e) {
-                System.err.println("Advertencia al leer usuarios.dat, se inicializa lista vacía: " + e.getMessage());
-                listaUsuarios = new ArrayList<>();
+        for (Usuario u : cargarUsuarios()) {
+            if (u.getUsuario().equalsIgnoreCase(usuario.getUsuario())) {
+                usuarioSesionActual = u;
+                registrarLoginSesion(u);
+                return;
             }
-        } else {
-            System.out.println("El archivo usuarios.dat no existe todavía. Se creará al registrar el primer usuario.");
-            listaUsuarios = new ArrayList<>();
         }
+        usuarioSesionActual = usuario;
+        registrarLoginSesion(usuario);
+    }
+
+    public static List<Usuario> getMejoresPuntuaciones() {
+        List<Usuario> listaOrdenada = cargarUsuarios();
+        listaOrdenada.sort(Comparator.comparingInt(Usuario::getPuntuacionMaxima).reversed());
+        return listaOrdenada;
     }
 }

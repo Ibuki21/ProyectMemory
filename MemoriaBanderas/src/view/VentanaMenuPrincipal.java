@@ -34,7 +34,7 @@ public class VentanaMenuPrincipal extends JFrame {
 
     private JPanel panelLeaderboard;
     private Dimension tamanoFijo;
-    private Dimension baseContenido;
+    private Dimension baseContenedor;
     private double escalaTextoAplicada = -1;
     private Timer timerTransicion;
     private Timer timerParpadeo;
@@ -95,7 +95,6 @@ public class VentanaMenuPrincipal extends JFrame {
             }
         });
 
-        // 🎵 Iniciar música de fondo del menú
         GestorMusica.reproducir("Recursos/Cancion/8 bits.wav");
 
         fondoMenu = new FondoAnimado("Recursos/Fondo.gif", () -> panelContenedor.repaint());
@@ -115,6 +114,7 @@ public class VentanaMenuPrincipal extends JFrame {
         cl.show(panelContenedor, "INTRO");
 
         int duracionIntroMillis = 25000;
+
         timerTransicion = new Timer(duracionIntroMillis, e -> terminarIntro());
         timerTransicion.setRepeats(false);
         timerTransicion.start();
@@ -226,7 +226,8 @@ public class VentanaMenuPrincipal extends JFrame {
             return;
         }
         GestorUsuarios.cerrarSesion();
-        JOptionPane.showMessageDialog(this, "Sesión cerrada. Nos vemos pronto, " + actual.getUsuario() + ".", "Sesión Cerrada", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Sesión cerrada. Hasta pronto, " + actual.getNombre() + ".",
+                "Cerrar sesión", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void alternarPantallaCompleta() {
@@ -319,16 +320,18 @@ public class VentanaMenuPrincipal extends JFrame {
                 if (ancho <= 0 || alto <= 0) {
                     return;
                 }
-                if (baseContenido == null) {
-                    baseContenido = new Dimension(ancho, alto);
+                if (baseContenedor == null) {
+                    baseContenedor = new Dimension(ancho, alto);
                 }
 
-                double escala = Math.min((double) ancho / baseContenido.width,
-                        (double) alto / baseContenido.height);
+                double escala = Math.min((double) ancho / baseContenedor.width,
+                        (double) alto / baseContenedor.height);
                 int margen = (int) Math.round(MARGEN * escala);
+
                 int anchoBoton = (int) Math.round(ANCHO_BOTON * escala);
                 int altoBoton = (int) Math.round(ALTO_BOTON * escala);
                 int separacion = (int) Math.round(SEPARACION_BOTONES * escala);
+
                 int anchoTabla = (int) Math.round(ANCHO_LEADERBOARD * escala);
                 int altoTabla = (int) Math.round(ALTO_LEADERBOARD * escala);
 
@@ -339,8 +342,9 @@ public class VentanaMenuPrincipal extends JFrame {
 
                 JButton[] botones = {btnLogin, btnBandera, btnPatron, btnMusica};
                 int altoColumna = botones.length * altoBoton + (botones.length - 1) * separacion;
+
                 int x = (ancho - anchoBoton) / 2;
-                int y = (alto - altoColumna) / 2 + 60;
+                int y = (alto - altoColumna) / 2 + 30;
 
                 for (JButton boton : botones) {
                     if (boton != null) {
@@ -420,6 +424,7 @@ public class VentanaMenuPrincipal extends JFrame {
             VentanaLogin loginDialog = new VentanaLogin(this);
             new ControladorLogin(loginDialog);
             loginDialog.setVisible(true);
+            actualizarTablaPuntuaciones();
         });
 
         btnBandera = crearBotonConImagen("Recursos/Memoria.png", 260, 50);
@@ -433,15 +438,16 @@ public class VentanaMenuPrincipal extends JFrame {
         btnPatron.addActionListener(e -> {
             ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
-            ControladorModoPatron controlador = new ControladorModoPatron(ventanaPatron);
             ventanaPatron.setVisible(true);
+            ControladorModoPatron controlador = new ControladorModoPatron(ventanaPatron);
             controlador.iniciar();
+            actualizarTablaPuntuaciones();
         });
 
         btnMusica = crearBotonConImagen("Recursos/Musica.png", 260, 50);
         btnMusica.addActionListener(e -> {
             ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
-            alternarMusicaFondo();
+            GestorMusica.alternarSilencio();
         });
 
         panelComponentesFlotantes.add(panelLeaderboard);
@@ -457,6 +463,7 @@ public class VentanaMenuPrincipal extends JFrame {
 
     private Border crearBordeLeaderboard(double escala) {
         int tamanoLetra = Math.max(8, (int) Math.round(14 * escala));
+
         return BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
                 " Top Jugadores ",
@@ -469,8 +476,10 @@ public class VentanaMenuPrincipal extends JFrame {
         }
         escalaTextoAplicada = escala;
         int tamanoLetra = Math.max(7, (int) Math.round(12 * escala));
+
         tablaPuntuaciones.setFont(new Font("Segoe UI", Font.PLAIN, tamanoLetra));
         tablaPuntuaciones.setRowHeight(Math.max(10, (int) Math.round(24 * escala)));
+
         tablaPuntuaciones.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, tamanoLetra));
         panelLeaderboard.setBorder(crearBordeLeaderboard(escala));
     }
@@ -504,7 +513,7 @@ public class VentanaMenuPrincipal extends JFrame {
             modeloTabla.addRow(new Object[]{
                     posicion++,
                     u.getUsuario(),
-                    u.getPuntuacionMaxima()
+                    u.getPuntuacionMaxima() // 📈 Muestra el total acumulado de puntos de cada cuenta leída del archivo
             });
         }
     }
@@ -533,13 +542,6 @@ public class VentanaMenuPrincipal extends JFrame {
         boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         return boton;
-    }
-
-    private void alternarMusicaFondo() {
-        GestorMusica.alternarSilencio();
-        if (!GestorMusica.isMusicaSilenciada()) {
-            GestorMusica.reproducir("Recursos/Cancion/8 bits.wav");
-        }
     }
 
     // --- Getters ---

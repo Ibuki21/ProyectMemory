@@ -3,12 +3,15 @@ package controller;
 import model.GestorUsuarios;
 import model.LogicaPatron;
 import model.Usuario;
+import model.ServicioCambioDolar;
 import view.DialogoSeleccionJugador;
 import view.VentanaModoPatron;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.List;
 
 public class ControladorModoPatron {
@@ -25,19 +28,28 @@ public class ControladorModoPatron {
     private int segundosRestantesTotal = 120;
     private int segundosRestantesCasilla = 20;
 
-    // Control de clics para evitar que se pongan grises al bloquear
     private boolean tableroHabilitado = false;
 
     private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
+    private static final String RUTA_MUSICA_ACDC = "Recursos/Cancion/AC-DC.wav";
+    private static final String RUTA_MUSICA_MENU = "Recursos/Cancion/8 bits.wav";
 
     public ControladorModoPatron(VentanaModoPatron vista) {
         this.vista = vista;
         this.modelo = new LogicaPatron(6, 6);
 
-        // Evaluar jugadores para mostrar la selección si hay 2 cuentas activas
-        seleccionarJugadorParaPartida();
+        GestorMusica.reproducir(RUTA_MUSICA_ACDC);
 
+        seleccionarJugadorParaPartida();
         initListeners();
+
+        vista.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                detenerTimers();
+                GestorMusica.reproducir(RUTA_MUSICA_MENU);
+            }
+        });
     }
 
     private void seleccionarJugadorParaPartida() {
@@ -77,9 +89,15 @@ public class ControladorModoPatron {
                 final int c = j;
                 if (botones[i][j] != null) {
                     botones[i][j].addActionListener(e -> {
-                        // Solo permite hacer clic si el tablero está habilitado para el jugador
                         if (!tableroHabilitado) return;
+
                         ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+
+                        vista.resaltarCasilla(f, c);
+                        Timer timerApagar = new Timer(300, ev -> vista.quitarResaltado(f, c));
+                        timerApagar.setRepeats(false);
+                        timerApagar.start();
+
                         verificarSeleccion(f, c);
                     });
                 }
@@ -90,6 +108,7 @@ public class ControladorModoPatron {
             vista.getBtnTerminarIntento().addActionListener(e -> {
                 ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
                 detenerTimers();
+                GestorMusica.reproducir(RUTA_MUSICA_MENU);
                 vista.dispose();
             });
         }
@@ -117,16 +136,14 @@ public class ControladorModoPatron {
                 if (pasoActualMostrar < secuenciaFinal.size()) {
                     int[] coordenada = secuenciaFinal.get(pasoActualMostrar);
                     if (coordenada != null && coordenada.length >= 2) {
-                        // 1. Mostrar la lucecita negra / resaltado en la vista
                         vista.resaltarCasilla(coordenada[0], coordenada[1]);
-                        // 2. Reproducir el sonido de presionar botón en cada paso del patrón
                         ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
                     }
                     pasoActualMostrar++;
                 } else {
                     timerMostrarPatron.stop();
                     vista.quitarTodosLosResaltados();
-                    bloquearTablero(false); // Habilita el tablero manteniendo los colores reales
+                    bloquearTablero(false);
                     iniciarTimersJuego();
                 }
             }
@@ -184,13 +201,31 @@ public class ControladorModoPatron {
 
     private void finalizarJuego() {
         detenerTimers();
+        GestorMusica.reproducir(RUTA_MUSICA_MENU);
 
         if (jugadorActivo != null && modelo != null) {
             int puntuacionObtenida = modelo.getPuntuacion();
-            if (puntuacionObtenida > jugadorActivo.getPuntuacionMaxima()) {
-                jugadorActivo.setPuntuacionMaxima(puntuacionObtenida);
-                GestorUsuarios.guardarUsuarios();
+            int puntajeParaFormula = Math.max(puntuacionObtenida, 1);
+
+            // 🧮 Aplicar fórmula del BCCR
+            double premioColones = ServicioCambioDolar.calcularPremio(puntajeParaFormula);
+            int puntosRedondeados = (int) Math.round(premioColones);
+            if (puntosRedondeados <= 0) {
+                puntosRedondeados = 50; // Puntos mínimos por participar
             }
+
+            // 🎯 Sumar puntos EXCLUSIVAMENTE al jugador activo de esta partida
+            jugadorActivo.agregarPuntos(puntosRedondeados);
+            if (puntosRedondeados > jugadorActivo.getPuntuacionMaxima()) {
+                jugadorActivo.setPuntuacionMaxima(puntosRedondeados);
+            }
+
+            GestorUsuarios.actualizarPuntuacionUsuario(jugadorActivo);
+
+            JOptionPane.showMessageDialog(vista,
+                    "¡Partida de Patrón finalizada para " + jugadorActivo.getUsuario() + "!\n" +
+                            "⭐ Puntos sumados a su cuenta: +" + puntosRedondeados,
+                    "Puntaje Registrado", JOptionPane.INFORMATION_MESSAGE);
         }
         if (vista != null) {
             vista.dispose();
@@ -198,8 +233,6 @@ public class ControladorModoPatron {
     }
 
     private void bloquearTablero(boolean bloquear) {
-        // En lugar de usar setEnabled(false) que pone los botones grises,
-        // usamos una bandera booleana para conservar los colores vivos de las banderas.
         tableroHabilitado = !bloquear;
     }
 

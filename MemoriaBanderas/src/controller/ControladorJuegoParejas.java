@@ -16,6 +16,7 @@ import javax.imageio.ImageIO;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 public class ControladorJuegoParejas {
 
@@ -25,6 +26,8 @@ public class ControladorJuegoParejas {
 
     private static final String RUTA_PAREJAS = "Recursos/Parejas/";
     private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
+    private static final String RUTA_MUSICA_ACDC = "Recursos/Cancion/AC-DC.wav";
+    private static final String RUTA_MUSICA_MENU = "Recursos/Cancion/8 bits.wav";
 
     private static final Map<String, ImageIcon> CACHE_ICONOS = new HashMap<>();
     private static final Font FUENTE_CARTA_OCULTA = new Font("Segoe UI", Font.BOLD, 18);
@@ -49,13 +52,16 @@ public class ControladorJuegoParejas {
         this.logica1 = new JuegoParejasLogica();
         this.logica2 = new JuegoParejasLogica();
 
+        GestorMusica.reproducir(RUTA_MUSICA_ACDC);
+
         inicializarEventos();
 
         vista.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosed(WindowEvent e) {
+            public void windowClosing(WindowEvent e) {
                 if (timerTurno != null) timerTurno.stop();
                 if (timerMemoria != null) timerMemoria.stop();
+                GestorMusica.reproducir(RUTA_MUSICA_MENU);
             }
         });
 
@@ -106,8 +112,10 @@ public class ControladorJuegoParejas {
                 opciones[0]);
 
         if (eleccion == 0) {
+            GestorMusica.reproducir(RUTA_MUSICA_ACDC);
             reiniciarPartida();
         } else {
+            GestorMusica.reproducir(RUTA_MUSICA_MENU);
             vista.dispose();
         }
     }
@@ -143,51 +151,45 @@ public class ControladorJuegoParejas {
             return;
         }
 
-        Usuario sesionPrevia = GestorUsuarios.getUsuarioSesionActual();
-        Usuario destino;
+        // 🎯 Vinculación estricta: Tablero 1 = Jugador 1 (índice 0), Tablero 2 = Jugador 2 (índice 1)
+        List<Usuario> listaJugadores = GestorUsuarios.getUsuariosSesion();
+        Usuario destino = null;
 
-        if (jugador == 1 && sesionPrevia != null) {
-            destino = sesionPrevia;
+        if (jugador == 1 && !listaJugadores.isEmpty()) {
+            destino = listaJugadores.get(0);
+        } else if (jugador == 2 && listaJugadores.size() >= 2) {
+            destino = listaJugadores.get(1);
         } else {
-            JOptionPane.showMessageDialog(vista,
-                    "Por favor, inicie sesión con la cuenta correspondiente al " + nombreTablero + ".",
-                    "Autenticación requerida", JOptionPane.INFORMATION_MESSAGE);
-
-            VentanaLogin login = new VentanaLogin(vista);
-            new ControladorLogin(login);
-            login.setVisible(true);
             destino = GestorUsuarios.getUsuarioSesionActual();
         }
 
         if (destino == null) {
-            JOptionPane.showMessageDialog(vista, "No se registró el puntaje porque no se inició sesión.",
+            JOptionPane.showMessageDialog(vista, "No se encontró el perfil correspondiente para registrar el puntaje de este tablero.",
                     "Puntaje no registrado", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
         boolean mejoro = destino.registrarIntentosParejas(intentos);
 
-        // CORRECCIÓN: Se agregó el operador de multiplicación faltante (*)
-        int puntosGanados = Math.max(10, 200 - (intentos * 2));
+        // 🧮 Cálculo de puntos basado en intentos usando la fórmula BCCR
+        double premioColones = ServicioCambioDolar.calcularPremio(Math.max(intentos, 1));
+        int puntosGanados = (int) Math.round(premioColones);
+        if (puntosGanados <= 0) {
+            puntosGanados = Math.max(10, 200 - (intentos * 2));
+        }
 
         destino.agregarPuntos(puntosGanados);
         GestorUsuarios.actualizarPuntuacionUsuario(destino);
 
-        double premioColones = ServicioCambioDolar.calcularPremio(intentos);
-
         String mensaje = "¡Puntaje registrado para " + destino.getUsuario() + " (" + nombreTablero + ")!\n" +
                 "• Intentos realizados: " + intentos + "\n" +
-                "• Premio estimado (BCCR): ₡" + String.format("%.2f", premioColones);
+                "• Puntos sumados (BCCR): +" + puntosGanados;
 
         if (!mejoro) {
             mensaje += "\n(Su mejor marca histórica en este modo sigue siendo: " + destino.getMejorIntentosParejas() + " intentos)";
         }
 
         JOptionPane.showMessageDialog(vista, mensaje, "Puntaje y Premio Registrado", JOptionPane.INFORMATION_MESSAGE);
-
-        if (jugador == 2 && sesionPrevia != null) {
-            GestorUsuarios.establecerSesion(sesionPrevia);
-        }
     }
 
     private void iniciarFaseMemoria() {
@@ -342,7 +344,7 @@ public class ControladorJuegoParejas {
                 cargarGifEnTablero(2, false);
 
                 vista.getLblTurno().setText("¡Jugador 1 completó su tablero primero!");
-                JOptionPane.showMessageDialog(vista, "¡El Jugador 1 ganó al completar todas suas parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(vista, "¡El Jugador 1 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
                 ofrecerRegistroPuntaje(1, logica1.getIntentos());
                 preguntarSiguientePaso();
             } else if (gano2) {
@@ -353,7 +355,7 @@ public class ControladorJuegoParejas {
                 cargarGifEnTablero(1, false);
 
                 vista.getLblTurno().setText("¡Jugador 2 completó su tablero primero!");
-                JOptionPane.showMessageDialog(vista, "¡El Jugador 2 ganó al completar todas suas parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(vista, "¡El Jugador 2 ganó al completar todas sus parejas primero!", "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
                 ofrecerRegistroPuntaje(2, logica2.getIntentos());
                 preguntarSiguientePaso();
             }

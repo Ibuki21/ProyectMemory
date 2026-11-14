@@ -9,15 +9,12 @@ public class GestorMusica {
     private static String rutaActual = "";
     private static boolean musicaSilenciada = false;
 
-    // Reproduce una pista en bucle continuo
+    // Reproduce una pista en bucle continuo y fuerza el cambio de audio
     public static void reproducir(String rutaAudio) {
         if (musicaSilenciada) return;
 
-        // Si ya está sonando exactamente esta misma pista, no la reiniciamos
-        if (clipActual != null && rutaAudio.equals(rutaActual) && clipActual.isRunning()) {
-            return;
-        }
-
+        // 🔥 CORRECCIÓN CLAVE: Forzamos siempre la detención del clip actual
+        // para garantizar que nunca se encimen canciones al cambiar de ventana.
         detener();
 
         try {
@@ -38,11 +35,17 @@ public class GestorMusica {
     }
 
     public static void detener() {
-        if (clipActual != null) {
-            if (clipActual.isRunning()) {
-                clipActual.stop();
+        try {
+            if (clipActual != null) {
+                if (clipActual.isRunning()) {
+                    clipActual.stop();
+                }
+                clipActual.flush();
+                clipActual.close();
             }
-            clipActual.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
             clipActual = null;
             rutaActual = "";
         }

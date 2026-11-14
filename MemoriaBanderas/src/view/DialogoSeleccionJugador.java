@@ -11,11 +11,10 @@ public class DialogoSeleccionJugador extends JDialog {
 
     public DialogoSeleccionJugador(Window parent, List<Usuario> jugadores) {
         super(parent, "Selección de Jugador", ModalityType.APPLICATION_MODAL);
-        setSize(850, 520);
+        setSize(920, 550); // 📏 Tamaño intermedio, cómodo y proporcionado
         setLocationRelativeTo(parent);
         setResizable(false);
 
-        // Imagen de fondo corregida con la ruta exacta que indicaste
         PanelFondo panelFondo = new PanelFondo("Recursos/PantallaEleccion.png");
         panelFondo.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -46,8 +45,8 @@ public class DialogoSeleccionJugador extends JDialog {
 
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        // Margen ajustado para ubicar los botones en la zona despejada de la pantalla de elección
-        panelFondo.setBorder(BorderFactory.createEmptyBorder(80, 45, 40, 420));
+        // 📐 Márgenes proporcionales a la nueva medida de la ventana
+        panelFondo.setBorder(BorderFactory.createEmptyBorder(85, 50, 45, 460));
         panelFondo.add(panelBotones, gbc);
 
         setContentPane(panelFondo);
@@ -59,7 +58,7 @@ public class DialogoSeleccionJugador extends JDialog {
         boton.setBackground(new Color(20, 35, 60, 220));
         boton.setFocusPainted(false);
         boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        boton.setPreferredSize(new Dimension(240, 65));
+        boton.setPreferredSize(new Dimension(250, 68)); // Botones ligeramente más grandes pero estéticos
     }
 
     public Usuario getJugadorSeleccionado() {

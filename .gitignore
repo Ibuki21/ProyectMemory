@@ -28,3 +28,4 @@ usuarios.txt
 MemoriaBanderas/lib/*.jar
 rostros.dat
 **/rostros.dat
+/MemoriaBanderas/target/

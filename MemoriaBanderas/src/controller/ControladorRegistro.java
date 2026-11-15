@@ -1,6 +1,7 @@
 package controller;
 import model.Usuario;
 import model.GestorUsuarios;
+import model.DatosFaciales;
 import view.VentanaRegistro;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -16,6 +17,7 @@ public class ControladorRegistro {
 
         this.vista.getBtnCargarFoto().addActionListener(e -> seleccionarFoto());
         this.vista.getBtnRegistrar().addActionListener(e -> registrar());
+        this.vista.getBtnRegistrarRostro().addActionListener(e -> capturarRostro());
         this.vista.getBtnCancelar().addActionListener(e -> vista.dispose());
     }
 
@@ -32,6 +34,17 @@ public class ControladorRegistro {
             Image imgEscalada = iconoOriginal.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
             vista.getLblVistaPreviaFoto().setIcon(new ImageIcon(imgEscalada));
             vista.getLblVistaPreviaFoto().setText("");
+        }
+    }
+
+    // Abre la cámara y captura el rostro. Se guarda en disco hasta que el registro se complete.
+    private void capturarRostro() {
+        float[] rostro = new ControladorFacial().capturarDatosFaciales(vista);
+        if (rostro != null) {
+            vista.setDatosFaciales(rostro);
+            JOptionPane.showMessageDialog(vista,
+                    "Datos faciales capturados. Se guardarán al completar el registro.",
+                    "Datos faciales", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -63,7 +76,13 @@ public class ControladorRegistro {
         if (GestorUsuarios.registrarUsuario(nuevoUsuario)) {
             // Al registrarse, la sesión se inicia automáticamente con el usuario nuevo
             GestorUsuarios.establecerSesion(nuevoUsuario);
-            JOptionPane.showMessageDialog(vista, "¡Registro realizado con éxito! Se inició sesión como " + usuario + ".", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            String aviso = "";
+            if (vista.getDatosFaciales() != null) {
+                aviso = DatosFaciales.guardar(usuario, vista.getDatosFaciales())
+                        ? "\nYa puede iniciar sesión con su rostro."
+                        : "\nNo se pudieron guardar los datos faciales; podrá ingresar con su usuario y contraseña.";
+            }
+            JOptionPane.showMessageDialog(vista, "¡Registro realizado con éxito! Se inició sesión como " + usuario + "." + aviso, "Éxito", JOptionPane.INFORMATION_MESSAGE);
             vista.dispose();
         } else {
             JOptionPane.showMessageDialog(vista, "El correo o nombre de usuario ya se encuentra registrado.", "Error", JOptionPane.ERROR_MESSAGE);

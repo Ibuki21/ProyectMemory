@@ -21,10 +21,13 @@ public class VentanaRegistro extends JDialog {
     private JButton btnRegistrar;
     private JButton btnCancelar;
     private File archivoFotoSeleccionado;
+    private JButton btnRegistrarRostro;
+    private JLabel lblEstadoRostro;
+    private float[] datosFaciales;   // Rostro capturado (null si el usuario no registró datos faciales)
 
     public VentanaRegistro(Window parent) {
         super(parent, "Registro de Usuario", ModalityType.APPLICATION_MODAL);
-        setSize(480, 560);
+        setSize(480, 620);
         setLocationRelativeTo(parent);
         setResizable(false);
 
@@ -88,6 +91,18 @@ public class VentanaRegistro extends JDialog {
         panelFoto.add(lblVistaPreviaFoto);
         gbc.gridx = 1; panel.add(panelFoto, gbc);
 
+        // Datos faciales: opcionales, el usuario puede registrarse sin ellos
+        gbc.gridx = 0; gbc.gridy = 9; panel.add(crearLabel("Inicio con Datos Faciales:"), gbc);
+
+        JPanel panelRostro = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        panelRostro.setOpaque(false);
+        btnRegistrarRostro = new JButton("Registrar Datos Faciales");
+        lblEstadoRostro = new JLabel("Opcional");
+        lblEstadoRostro.setForeground(Color.WHITE);
+        panelRostro.add(btnRegistrarRostro);
+        panelRostro.add(lblEstadoRostro);
+        gbc.gridx = 1; panel.add(panelRostro, gbc);
+
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         panelBotones.setOpaque(false);
 
@@ -96,7 +111,7 @@ public class VentanaRegistro extends JDialog {
         panelBotones.add(btnRegistrar);
         panelBotones.add(btnCancelar);
 
-        gbc.gridx = 0; gbc.gridy = 9; gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = 10; gbc.gridwidth = 2;
         panel.add(panelBotones, gbc);
 
         add(panel);
@@ -121,6 +136,19 @@ public class VentanaRegistro extends JDialog {
     public JButton getBtnCargarFoto() { return btnCargarFoto; }
     public JButton getBtnRegistrar() { return btnRegistrar; }
     public JButton getBtnCancelar() { return btnCancelar; }
+    public JButton getBtnRegistrarRostro() { return btnRegistrarRostro; }
+    public float[] getDatosFaciales() { return datosFaciales; }
+
+    // Guarda el rostro capturado y avisa en pantalla que ya está listo
+    public void setDatosFaciales(float[] datosFaciales) {
+        this.datosFaciales = datosFaciales;
+        if (datosFaciales != null) {
+            lblEstadoRostro.setText("\u2714 Capturados");
+            lblEstadoRostro.setForeground(new Color(120, 230, 120));
+            btnRegistrarRostro.setText("Volver a capturar");
+        }
+    }
+
     public File getArchivoFotoSeleccionado() { return archivoFotoSeleccionado; }
     public void setArchivoFotoSeleccionado(File archivoFotoSeleccionado) { this.archivoFotoSeleccionado = archivoFotoSeleccionado; }
 }

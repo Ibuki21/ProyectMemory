@@ -24,3 +24,7 @@ hs_err_pid*
 replay_pid*
 
 usuarios.txt
+# Librerías descargadas con lib/descargar_librerias.sh y datos faciales (biométricos)
+MemoriaBanderas/lib/*.jar
+rostros.dat
+**/rostros.dat

@@ -34,6 +34,33 @@ public class ControladorLogin {
             ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             procesarLogin();
         });
+
+        vista.getBtnRostro().addActionListener(e -> {
+            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+            procesarLoginFacial();
+        });
+    }
+
+    // Inicio de sesión por reconocimiento facial: no hace falta escribir usuario ni contraseña
+    private void procesarLoginFacial() {
+        Usuario usuario = new ControladorFacial().iniciarSesionConRostro(vista);
+        if (usuario != null) {
+            GestorUsuarios.establecerSesion(usuario);
+            completarLogin(usuario);
+        }
+    }
+
+    // Lo que sigue a un inicio de sesión exitoso (con contraseña o con rostro)
+    private void completarLogin(Usuario usuario) {
+        contadorLoginsExitosos++;
+
+        // Registrar usuario en la sesión para el Modo Patrones
+        GestorUsuarios.registrarLoginSesion(usuario);
+
+        String rutaImagen = (contadorLoginsExitosos == 1) ? "Recursos/Jugador1.png" : "Recursos/Jugador2.png";
+
+        mostrarImagenBienvenida(rutaImagen);
+        vista.dispose();
     }
 
     private void procesarLogin() {
@@ -51,16 +78,7 @@ public class ControladorLogin {
         Usuario usuarioAutenticado = GestorUsuarios.iniciarSesion(identificador, password);
 
         if (usuarioAutenticado != null) {
-            contadorLoginsExitosos++;
-
-            // Registrar usuario en la sesión para el Modo Patrones
-            GestorUsuarios.registrarLoginSesion(usuarioAutenticado);
-
-            String rutaImagen = (contadorLoginsExitosos == 1) ? "Recursos/Jugador1.png" : "Recursos/Jugador2.png";
-
-            mostrarImagenBienvenida(rutaImagen);
-            vista.dispose();
-
+            completarLogin(usuarioAutenticado);
         } else {
             JOptionPane.showMessageDialog(vista,
                     "Credenciales incorrectas o usuario no encontrado.",

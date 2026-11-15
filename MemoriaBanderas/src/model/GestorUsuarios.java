@@ -140,6 +140,16 @@ public class GestorUsuarios {
         }
     }
 
+    // Busca un usuario por su nombre de usuario (sin distinguir mayúsculas). Devuelve null si no existe.
+    public static Usuario buscarPorUsuario(String nombreUsuario) {
+        for (Usuario u : cargarUsuarios()) {
+            if (u.getUsuario().equalsIgnoreCase(nombreUsuario)) {
+                return u;
+            }
+        }
+        return null;
+    }
+
     public static Usuario getUsuarioSesionActual() {
         return usuarioSesionActual;
     }

@@ -11,11 +11,12 @@ public class VentanaLogin extends JDialog {
     private JButton btnIniciarSesion;
     private JButton btnRegistrarse;
     private JButton btnCancelar;
+    private JButton btnRostro;
     private boolean passwordVisible = false;
 
     public VentanaLogin(Frame parent) {
         super(parent, "Iniciar Sesión", true);
-        setSize(430, 330);
+        setSize(430, 380);
         setLocationRelativeTo(parent);
         setResizable(false);
 
@@ -65,6 +66,11 @@ public class VentanaLogin extends JDialog {
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 3;
         panel.add(panelBotones, gbc);
 
+        // Inicio de sesión con reconocimiento facial
+        btnRostro = new JButton("Ingresar con Rostro");
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 3;
+        panel.add(btnRostro, gbc);
+
         add(panel);
     }
 
@@ -85,4 +91,5 @@ public class VentanaLogin extends JDialog {
     public JButton getBtnIniciarSesion() { return btnIniciarSesion; }
     public JButton getBtnRegistrarse() { return btnRegistrarse; }
     public JButton getBtnCancelar() { return btnCancelar; }
+    public JButton getBtnRostro() { return btnRostro; }
 }

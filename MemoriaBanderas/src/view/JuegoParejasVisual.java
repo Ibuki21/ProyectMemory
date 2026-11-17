@@ -5,6 +5,7 @@ import controller.GestorMusica;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.net.URL;
 
 public class JuegoParejasVisual extends JFrame {
 
@@ -15,11 +16,13 @@ public class JuegoParejasVisual extends JFrame {
     private JLabel lblIntentos1, lblPares1;
     private JPanel panelSubTablero1;
     private JPanel panelGrid1;
+    private JButton btnPista1;
 
     private JButton[][] botonesTablero2;
     private JLabel lblIntentos2, lblPares2;
     private JPanel panelSubTablero2;
     private JPanel panelGrid2;
+    private JButton btnPista2;
 
     private JLabel lblTurno;
     private JProgressBar barraTiempo;
@@ -29,10 +32,12 @@ public class JuegoParejasVisual extends JFrame {
 
     public JuegoParejasVisual() {
         setTitle("Doble Desafío: Encuentra la Pareja (Modo Clásico 6x6)");
-        setSize(1280, 768);
+
+        // 🖥️ Maximizado en pantalla completa
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
 
         // 🎵 Cambiar a AC-DC.wav al abrir y restaurar 8 bits.wav al cerrar
         GestorMusica.reproducir("Recursos/Cancion/AC-DC.wav");
@@ -45,18 +50,18 @@ public class JuegoParejasVisual extends JFrame {
 
         PanelFondo panelFondo = new PanelFondo("Recursos/Fondo1.jpg");
         panelFondo.setLayout(new BorderLayout(10, 10));
-        panelFondo.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        panelFondo.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
-        JPanel panelSuperior = new JPanel(new GridLayout(3, 1, 0, 4));
+        JPanel panelSuperior = new JPanel(new GridLayout(3, 1, 0, 2));
         panelSuperior.setOpaque(false);
 
         JLabel lblTitulo = new JLabel("MODO CLÁSICO: DOBLE TABLERO 6x6 (18 PARES)", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitulo.setForeground(Color.WHITE);
         panelSuperior.add(lblTitulo);
 
         lblTurno = new JLabel("Turno: Jugador 1", SwingConstants.CENTER);
-        lblTurno.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblTurno.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblTurno.setForeground(new Color(255, 215, 0));
         panelSuperior.add(lblTurno);
 
@@ -65,7 +70,7 @@ public class JuegoParejasVisual extends JFrame {
         barraTiempo.setStringPainted(true);
         barraTiempo.setString("Tiempo: 10.0 s");
         barraTiempo.setFont(new Font("SansSerif", Font.BOLD, 12));
-        barraTiempo.setPreferredSize(new Dimension(500, 20));
+        barraTiempo.setPreferredSize(new Dimension(500, 18));
         JPanel panelBarra = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         panelBarra.setOpaque(false);
         panelBarra.add(barraTiempo);
@@ -109,10 +114,11 @@ public class JuegoParejasVisual extends JFrame {
     }
 
     private JPanel crearPanelSubTablero(String nombreTablero, boolean esTableroUno) {
-        JPanel panelSub = new JPanel(new BorderLayout(4, 4));
+        JPanel panelSub = new JPanel(new BorderLayout(0, 2));
         panelSub.setOpaque(false);
         panelSub.setBorder(crearBordeTablero(nombreTablero, esTableroUno));
 
+        // 1. Estadísticas arriba
         JPanel panelStats = new JPanel(new GridLayout(1, 2));
         panelStats.setOpaque(false);
         JLabel lblIntentos = new JLabel("Intentos: 0", SwingConstants.CENTER);
@@ -127,14 +133,17 @@ public class JuegoParejasVisual extends JFrame {
         panelStats.add(lblPares);
         panelSub.add(panelStats, BorderLayout.NORTH);
 
-        JPanel panelGrid = new JPanel(new GridLayout(FILAS, COLUMNAS, 5, 5));
+        // 2. Cuadrícula de cartas (6x6) con tamaño ajustado a 55x55 para evitar cualquier corte vertical
+        JPanel panelGrid = new JPanel(new GridLayout(FILAS, COLUMNAS, 3, 3));
         panelGrid.setOpaque(false);
 
         JButton[][] botones = new JButton[FILAS][COLUMNAS];
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
                 JButton btn = new JButton();
-                btn.setPreferredSize(new Dimension(55, 55));
+                btn.setPreferredSize(new Dimension(54, 54));
+                btn.setMinimumSize(new Dimension(54, 54));
+                btn.setMaximumSize(new Dimension(54, 54));
                 btn.setFocusPainted(false);
                 btn.setBackground(new Color(30, 50, 80));
                 btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -142,7 +151,18 @@ public class JuegoParejasVisual extends JFrame {
                 panelGrid.add(btn);
             }
         }
-        panelSub.add(panelGrid, BorderLayout.CENTER);
+
+        JPanel panelGridWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        panelGridWrapper.setOpaque(false);
+        panelGridWrapper.add(panelGrid);
+        panelSub.add(panelGridWrapper, BorderLayout.CENTER);
+
+        // 3. Botón de pista abajo (200x145) ubicado en el sur absoluto del marco
+        JPanel panelSurTablero = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        panelSurTablero.setOpaque(false);
+        JButton btnPista = crearBotonImagenPista();
+        panelSurTablero.add(btnPista);
+        panelSub.add(panelSurTablero, BorderLayout.SOUTH);
 
         if (esTableroUno) {
             botonesTablero1 = botones;
@@ -150,15 +170,49 @@ public class JuegoParejasVisual extends JFrame {
             lblPares1 = lblPares;
             panelSubTablero1 = panelSub;
             panelGrid1 = panelGrid;
+            btnPista1 = btnPista;
         } else {
             botonesTablero2 = botones;
             lblIntentos2 = lblIntentos;
             lblPares2 = lblPares;
             panelSubTablero2 = panelSub;
             panelGrid2 = panelGrid;
+            btnPista2 = btnPista;
         }
 
         return panelSub;
+    }
+
+    private JButton crearBotonImagenPista() {
+        JButton boton = new JButton();
+        try {
+            URL urlImg = getClass().getClassLoader().getResource("Recursos/Pista.png");
+            if (urlImg != null) {
+                ImageIcon iconoOriginal = new ImageIcon(urlImg);
+                // Tamaño exacto de 200x145
+                Image imgEscalada = iconoOriginal.getImage().getScaledInstance(200, 145, Image.SCALE_SMOOTH);
+                boton.setIcon(new ImageIcon(imgEscalada));
+            } else {
+                boton.setText("Pista");
+            }
+        } catch (Exception e) {
+            boton.setText("Pista");
+        }
+
+        // Forzar tamaño exacto de 200x145
+        Dimension dimensionBoton = new Dimension(200, 145);
+        boton.setPreferredSize(dimensionBoton);
+        boton.setMinimumSize(dimensionBoton);
+        boton.setMaximumSize(dimensionBoton);
+
+        // Propiedades de botón limpio con imagen
+        boton.setBorderPainted(false);
+        boton.setContentAreaFilled(false);
+        boton.setFocusPainted(false);
+        boton.setOpaque(false);
+        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        boton.setToolTipText("Ver todas las cartas por 3 segundos (Única vez por partida)");
+        return boton;
     }
 
     public void mostrarGifEnTablero(int numTablero, ImageIcon gifIcono) {
@@ -192,7 +246,7 @@ public class JuegoParejasVisual extends JFrame {
         detenerGif(numTablero);
         JPanel panelGrid = (numTablero == 1) ? panelGrid1 : panelGrid2;
         panelGrid.removeAll();
-        panelGrid.setLayout(new GridLayout(FILAS, COLUMNAS, 5, 5));
+        panelGrid.setLayout(new GridLayout(FILAS, COLUMNAS, 3, 3));
         JButton[][] botones = (numTablero == 1) ? botonesTablero1 : botonesTablero2;
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
@@ -212,6 +266,8 @@ public class JuegoParejasVisual extends JFrame {
     public JLabel getLblTurno() { return lblTurno; }
     public JProgressBar getBarraTiempo() { return barraTiempo; }
     public JButton getBtnFinalizar() { return btnFinalizar; }
+    public JButton getBtnPista1() { return btnPista1; }
+    public JButton getBtnPista2() { return btnPista2; }
     public int getFilas() { return FILAS; }
     public int getColumnas() { return COLUMNAS; }
 }

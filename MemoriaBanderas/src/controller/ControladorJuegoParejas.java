@@ -47,6 +47,10 @@ public class ControladorJuegoParejas {
     private Timer timerTurno;
     private Timer timerMemoria;
 
+    // Banderas de control de pista única por jugador
+    private boolean pistaUsada1 = false;
+    private boolean pistaUsada2 = false;
+
     public ControladorJuegoParejas(JuegoParejasVisual vista) {
         this.vista = vista;
         this.logica1 = new JuegoParejasLogica();
@@ -88,6 +92,14 @@ public class ControladorJuegoParejas {
             }
         }
 
+        // Listeners para los botones de pista
+        if (vista.getBtnPista1() != null) {
+            vista.getBtnPista1().addActionListener(e -> usarPista(1));
+        }
+        if (vista.getBtnPista2() != null) {
+            vista.getBtnPista2().addActionListener(e -> usarPista(2));
+        }
+
         vista.getBtnFinalizar().addActionListener(e -> {
             if (juegoTerminado) return;
             ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
@@ -98,6 +110,70 @@ public class ControladorJuegoParejas {
             if (timerMemoria != null) timerMemoria.stop();
             preguntarSiguientePaso();
         });
+    }
+
+    private void usarPista(int numTablero) {
+        if (juegoTerminado || bloqueandoClics || faseDeMemoria || numTablero != jugadorActual) {
+            return;
+        }
+
+        if (numTablero == 1 && pistaUsada1) {
+            JOptionPane.showMessageDialog(vista, "El Jugador 1 ya usó su pista en esta partida.", "Pista agotada", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (numTablero == 2 && pistaUsada2) {
+            JOptionPane.showMessageDialog(vista, "El Jugador 2 ya usó su pista en esta partida.", "Pista agotada", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (numTablero == 1) {
+            pistaUsada1 = true;
+            if (vista.getBtnPista1() != null) vista.getBtnPista1().setEnabled(false);
+        } else {
+            pistaUsada2 = true;
+            if (vista.getBtnPista2() != null) vista.getBtnPista2().setEnabled(false);
+        }
+
+        ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+        bloqueandoClics = true;
+
+        JuegoParejasLogica logicaActiva = logicaDe(numTablero);
+        JButton[][] botones = (numTablero == 1) ? vista.getBotonesTablero1() : vista.getBotonesTablero2();
+        int filas = vista.getFilas();
+        int columnas = vista.getColumnas();
+
+        // Revelar temporalmente todas las cartas de este tablero
+        for (int i = 0; i < filas; i++) {
+            for (int j = 0; j < columnas; j++) {
+                int indice = i * columnas + j;
+                JButton btn = botones[i][j];
+                String nombreArchivo = logicaActiva.getCodigoCarta(indice);
+                ImageIcon icono = obtenerIcono(nombreArchivo, 55, 55);
+                if (icono != null) {
+                    btn.setIcon(icono);
+                    btn.setText("");
+                } else {
+                    btn.setIcon(null);
+                    btn.setText(nombreArchivo);
+                }
+                btn.setBackground(Color.WHITE);
+            }
+        }
+
+        if (vista.getLblTurno() != null) {
+            vista.getLblTurno().setText("¡PISTA ACTIVADA! Observa las cartas...");
+        }
+
+        // Temporizador de 3 segundos para volver a ocultar las no descubiertas
+        Timer timerPista = new Timer(3000, e -> {
+            actualizarVistaTablero(numTablero);
+            bloqueandoClics = false;
+            if (vista.getLblTurno() != null) {
+                vista.getLblTurno().setText("Turno: Jugador " + jugadorActual);
+            }
+        });
+        timerPista.setRepeats(false);
+        timerPista.start();
     }
 
     private void preguntarSiguientePaso() {
@@ -128,6 +204,11 @@ public class ControladorJuegoParejas {
         juegoTerminado = false;
         logica1.reiniciarJuego();
         logica2.reiniciarJuego();
+
+        pistaUsada1 = false;
+        pistaUsada2 = false;
+        if (vista.getBtnPista1() != null) vista.getBtnPista1().setEnabled(true);
+        if (vista.getBtnPista2() != null) vista.getBtnPista2().setEnabled(true);
 
         vista.getLblIntentos1().setText("Intentos: 0");
         vista.getLblPares1().setText("Pares: 0 / 18");

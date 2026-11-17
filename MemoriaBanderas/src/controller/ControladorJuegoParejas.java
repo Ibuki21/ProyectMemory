@@ -5,7 +5,6 @@ import model.JuegoParejasLogica;
 import model.Usuario;
 import model.ServicioCambioDolar;
 import view.JuegoParejasVisual;
-import view.VentanaLogin;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -102,7 +101,7 @@ public class ControladorJuegoParejas {
 
         vista.getBtnFinalizar().addActionListener(e -> {
             if (juegoTerminado) return;
-            ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+            GestorMusica.reproducirEfecto(RUTA_AUDIO_CLICK);
             partida++;
             juegoTerminado = true;
             bloqueandoClics = true;
@@ -134,7 +133,7 @@ public class ControladorJuegoParejas {
             if (vista.getBtnPista2() != null) vista.getBtnPista2().setEnabled(false);
         }
 
-        ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+        GestorMusica.reproducirEfecto(RUTA_AUDIO_CLICK);
         bloqueandoClics = true;
 
         JuegoParejasLogica logicaActiva = logicaDe(numTablero);
@@ -363,7 +362,7 @@ public class ControladorJuegoParejas {
         JuegoParejasLogica logicaActiva = logicaDe(numTablero);
         if (logicaActiva.estaRevelada(indice)) return;
 
-        ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+        GestorMusica.reproducirEfecto(RUTA_AUDIO_CLICK);
 
         if (!logicaActiva.seleccionarCarta(indice)) return;
 

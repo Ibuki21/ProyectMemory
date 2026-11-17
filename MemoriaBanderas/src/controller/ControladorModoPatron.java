@@ -91,7 +91,7 @@ public class ControladorModoPatron {
                     botones[i][j].addActionListener(e -> {
                         if (!tableroHabilitado) return;
 
-                        ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+                        GestorMusica.reproducirEfecto(RUTA_AUDIO_CLICK);
 
                         vista.resaltarCasilla(f, c);
                         Timer timerApagar = new Timer(300, ev -> vista.quitarResaltado(f, c));
@@ -106,7 +106,7 @@ public class ControladorModoPatron {
 
         if (vista.getBtnTerminarIntento() != null) {
             vista.getBtnTerminarIntento().addActionListener(e -> {
-                ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+                GestorMusica.reproducirEfecto(RUTA_AUDIO_CLICK);
                 detenerTimers();
                 GestorMusica.reproducir(RUTA_MUSICA_MENU);
                 vista.dispose();
@@ -137,7 +137,7 @@ public class ControladorModoPatron {
                     int[] coordenada = secuenciaFinal.get(pasoActualMostrar);
                     if (coordenada != null && coordenada.length >= 2) {
                         vista.resaltarCasilla(coordenada[0], coordenada[1]);
-                        ReproductorSonido.reproducirEfecto(RUTA_AUDIO_CLICK);
+                        GestorMusica.reproducirEfecto(RUTA_AUDIO_CLICK);
                     }
                     pasoActualMostrar++;
                 } else {

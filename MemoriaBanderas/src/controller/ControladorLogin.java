@@ -24,19 +24,19 @@ public class ControladorLogin {
         vista.getBtnCancelar().addActionListener(e -> vista.dispose());
 
         vista.getBtnRegistrarse().addActionListener(e -> {
-            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+            GestorMusica.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaRegistro registro = new VentanaRegistro(vista);
             new ControladorRegistro(registro);
             registro.setVisible(true);
         });
 
         vista.getBtnIniciarSesion().addActionListener(e -> {
-            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+            GestorMusica.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             procesarLogin();
         });
 
         vista.getBtnRostro().addActionListener(e -> {
-            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+            GestorMusica.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             procesarLoginFacial();
         });
     }

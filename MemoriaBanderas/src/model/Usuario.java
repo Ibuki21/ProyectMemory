@@ -65,7 +65,7 @@ public class Usuario implements Serializable {
     public int getPuntuacionMaxima() { return puntuacionMaxima; }
     public void setPuntuacionMaxima(int puntuacion) { this.puntuacionMaxima = puntuacion; }
 
-    // ➕ Acumula los puntos nuevos sumándolos de forma persistente al total
+    //  Acumula los puntos nuevos sumándolos de forma persistente al total
     public void agregarPuntos(int puntosNuevos) {
         if (puntosNuevos > 0) {
             this.puntuacionMaxima += puntosNuevos;

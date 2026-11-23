@@ -4,7 +4,6 @@ import model.Usuario;
 import model.GestorUsuarios;
 import controller.ControladorLogin;
 import controller.ControladorModoPatron;
-import controller.ReproductorSonido;
 import controller.GestorMusica;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -166,7 +165,7 @@ public class VentanaMenuPrincipal extends JFrame {
 
         actualizarTablaPuntuaciones();
 
-        ReproductorSonido.precargar("Recursos/Cancion/Botones/Presiona1.wav");
+        GestorMusica.precargar("Recursos/Cancion/Botones/Presiona1.wav");
         model.ServicioCambioDolar.precargar();
     }
 
@@ -420,7 +419,7 @@ public class VentanaMenuPrincipal extends JFrame {
 
         btnLogin = crearBotonConImagen("Recursos/Registro.png", 260, 50);
         btnLogin.addActionListener(e -> {
-            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+           GestorMusica.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaLogin loginDialog = new VentanaLogin(this);
             new ControladorLogin(loginDialog);
             loginDialog.setVisible(true);
@@ -429,14 +428,14 @@ public class VentanaMenuPrincipal extends JFrame {
 
         btnBandera = crearBotonConImagen("Recursos/Memoria.png", 260, 50);
         btnBandera.addActionListener(e -> {
-            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+            GestorMusica.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             JuegoParejasVisual ventanaParejas = new JuegoParejasVisual();
             ventanaParejas.setVisible(true);
         });
 
         btnPatron = crearBotonConImagen("Recursos/Patron.png", 260, 50);
         btnPatron.addActionListener(e -> {
-            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+            GestorMusica.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             VentanaModoPatron ventanaPatron = new VentanaModoPatron();
             ventanaPatron.setVisible(true);
             ControladorModoPatron controlador = new ControladorModoPatron(ventanaPatron);
@@ -446,7 +445,7 @@ public class VentanaMenuPrincipal extends JFrame {
 
         btnMusica = crearBotonConImagen("Recursos/Musica.png", 260, 50);
         btnMusica.addActionListener(e -> {
-            ReproductorSonido.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
+            GestorMusica.reproducirEfecto("Recursos/Cancion/Botones/Presiona1.wav");
             GestorMusica.alternarSilencio();
         });
 

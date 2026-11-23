@@ -231,7 +231,7 @@ public class ControladorJuegoParejas {
             return;
         }
 
-        // 🎯 Vinculación estricta: Tablero 1 = Jugador 1 (índice 0), Tablero 2 = Jugador 2 (índice 1)
+        //  Vinculación estricta: Tablero 1 = Jugador 1 (índice 0), Tablero 2 = Jugador 2 (índice 1)
         List<Usuario> listaJugadores = GestorUsuarios.getUsuariosSesion();
         Usuario destino = null;
 

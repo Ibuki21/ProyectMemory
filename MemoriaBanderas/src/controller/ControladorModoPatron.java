@@ -207,14 +207,14 @@ public class ControladorModoPatron {
             int puntuacionObtenida = modelo.getPuntuacion();
             int puntajeParaFormula = Math.max(puntuacionObtenida, 1);
 
-            // 🧮 Aplicar fórmula del BCCR
+            //  Aplicar fórmula del BCCR
             double premioColones = ServicioCambioDolar.calcularPremio(puntajeParaFormula);
             int puntosRedondeados = (int) Math.round(premioColones);
             if (puntosRedondeados <= 0) {
                 puntosRedondeados = 50; // Puntos mínimos por participar
             }
 
-            // 🎯 Sumar puntos EXCLUSIVAMENTE al jugador activo de esta partida
+            //  Sumar puntos EXCLUSIVAMENTE al jugador activo de esta partida
             jugadorActivo.agregarPuntos(puntosRedondeados);
             if (puntosRedondeados > jugadorActivo.getPuntuacionMaxima()) {
                 jugadorActivo.setPuntuacionMaxima(puntosRedondeados);

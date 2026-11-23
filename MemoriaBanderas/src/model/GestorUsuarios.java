@@ -88,7 +88,7 @@ public class GestorUsuarios {
         return null;
     }
 
-    // 🔗 Alias de compatibilidad para que controladores antiguos llamen a iniciarSesion sin error
+    // Alias de compatibilidad para que controladores antiguos llamen a iniciarSesion sin error
     public static Usuario iniciarSesion(String identificador, String password) {
         return validarCredenciales(identificador, password);
     }

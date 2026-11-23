@@ -22,7 +22,7 @@ public class VentanaModoPatron extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // 🎵 Cambiar a AC-DC.wav al abrir y restaurar 8 bits.wav al cerrar
+        // Cambiar a AC-DC.wav al abrir y restaurar 8 bits.wav al cerrar
         GestorMusica.reproducir("Recursos/Cancion/AC-DC.wav");
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -91,6 +91,38 @@ public class VentanaModoPatron extends JFrame {
         panelFondo.add(btnTerminarIntento, gbc);
 
         setContentPane(panelFondo);
+    }
+
+    public void mostrarGifDerrota(ImageIcon gif) {
+        JPanel panelGif = new JPanel(new GridBagLayout());
+        panelGif.setBackground(Color.BLACK);
+
+        int anchoOriginal = gif.getIconWidth();
+        int altoOriginal = gif.getIconHeight();
+        ImageIcon gifAmostrar = gif;
+
+        if (anchoOriginal > 0 && altoOriginal > 0) {
+            int maxAncho = Math.max(500, getWidth() - 120);
+            int maxAlto = Math.max(350, getHeight() - 100);
+
+            double escalaAncho = (double) maxAncho / anchoOriginal;
+            double escalaAlto = (double) maxAlto / altoOriginal;
+            double escala = Math.min(escalaAncho, escalaAlto);
+
+            int nuevoAncho = Math.max(1, (int) Math.round(anchoOriginal * escala));
+            int nuevoAlto = Math.max(1, (int) Math.round(altoOriginal * escala));
+
+            Image imagenEscalada = gif.getImage().getScaledInstance(nuevoAncho, nuevoAlto, Image.SCALE_DEFAULT);
+            gifAmostrar = new ImageIcon(imagenEscalada);
+        }
+
+        JLabel lblGif = new JLabel(gifAmostrar);
+        lblGif.setHorizontalAlignment(SwingConstants.CENTER);
+        panelGif.add(lblGif);
+
+        setContentPane(panelGif);
+        revalidate();
+        repaint();
     }
 
     public void resaltarCasilla(int fila, int columna) {

@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.net.URL;
 import java.util.List;
 
 public class ControladorModoPatron {
@@ -33,6 +34,8 @@ public class ControladorModoPatron {
     private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
     private static final String RUTA_MUSICA_ACDC = "Recursos/Cancion/AC-DC.wav";
     private static final String RUTA_MUSICA_MENU = "Recursos/Cancion/8 bits.wav";
+    private static final String RUTA_GIF_DERROTA = "Recursos/Cancion/Perdiste/Derrota.gif";
+    private static final int RETRASO_MENSAJE_DERROTA_MS = 5000;
 
     public ControladorModoPatron(VentanaModoPatron vista) {
         this.vista = vista;
@@ -194,8 +197,24 @@ public class ControladorModoPatron {
             }
         } else {
             detenerTimers();
-            JOptionPane.showMessageDialog(vista, "¡Fallaste el patrón!", "Game Over", JOptionPane.ERROR_MESSAGE);
-            finalizarJuego();
+            bloquearTablero(true);
+            mostrarGifDerrota();
+
+            Timer timerMensaje = new Timer(RETRASO_MENSAJE_DERROTA_MS, ev -> {
+                JOptionPane.showMessageDialog(vista, "¡Fallaste el patrón!", "Game Over", JOptionPane.ERROR_MESSAGE);
+                finalizarJuego();
+            });
+            timerMensaje.setRepeats(false);
+            timerMensaje.start();
+        }
+    }
+
+    private void mostrarGifDerrota() {
+        URL urlGif = getClass().getClassLoader().getResource(RUTA_GIF_DERROTA);
+        if (urlGif != null && vista != null) {
+            vista.mostrarGifDerrota(new ImageIcon(urlGif));
+        } else {
+            System.err.println("No se encontró el GIF en la ruta: " + RUTA_GIF_DERROTA);
         }
     }
 
@@ -207,14 +226,14 @@ public class ControladorModoPatron {
             int puntuacionObtenida = modelo.getPuntuacion();
             int puntajeParaFormula = Math.max(puntuacionObtenida, 1);
 
-            //  Aplicar fórmula del BCCR
+            // Aplicar fórmula del BCCR
             double premioColones = ServicioCambioDolar.calcularPremio(puntajeParaFormula);
             int puntosRedondeados = (int) Math.round(premioColones);
             if (puntosRedondeados <= 0) {
                 puntosRedondeados = 50; // Puntos mínimos por participar
             }
 
-            //  Sumar puntos EXCLUSIVAMENTE al jugador activo de esta partida
+            // Sumar puntos EXCLUSIVAMENTE al jugador activo de esta partida
             jugadorActivo.agregarPuntos(puntosRedondeados);
             if (puntosRedondeados > jugadorActivo.getPuntuacionMaxima()) {
                 jugadorActivo.setPuntuacionMaxima(puntosRedondeados);
@@ -224,7 +243,7 @@ public class ControladorModoPatron {
 
             JOptionPane.showMessageDialog(vista,
                     "¡Partida de Patrón finalizada para " + jugadorActivo.getUsuario() + "!\n" +
-                            "⭐ Puntos sumados a su cuenta: +" + puntosRedondeados,
+                            "Puntos sumados a su cuenta: +" + puntosRedondeados,
                     "Puntaje Registrado", JOptionPane.INFORMATION_MESSAGE);
         }
         if (vista != null) {

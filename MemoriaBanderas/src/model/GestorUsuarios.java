@@ -8,10 +8,10 @@ public class GestorUsuarios {
     private static final String RUTA_ARCHIVO = "usuarios.txt";
     private static Usuario usuarioSesionActual = null;
 
-    // 👥 Mínimo agregado: Lista para controlar hasta 2 jugadores activos simultáneos en los minijuegos
+    //Mínimo agregado: Lista para controlar hasta 2 jugadores activos simultáneos en los minijuegos
     private static final List<Usuario> usuariosSesion = new ArrayList<>();
 
-    static {
+    static { //Bloque que se ejecuta una sola vez al cargar la clase
         crearArchivoSiNoExiste();
     }
 
@@ -21,7 +21,7 @@ public class GestorUsuarios {
             if (!file.exists()) {
                 file.createNewFile();
             }
-        } catch (IOException e) {
+        } catch (IOException e) { //Captura errores si no se pudo crear el archivo
             System.err.println("Error al inicializar el archivo de usuarios: " + e.getMessage());
         }
     }
@@ -40,12 +40,12 @@ public class GestorUsuarios {
 
     public static List<Usuario> cargarUsuarios() {
         List<Usuario> lista = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(RUTA_ARCHIVO))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(RUTA_ARCHIVO))) { // Abre el archivo de usuarios para leerlo
             String linea;
-            while ((linea = reader.readLine()) != null) {
+            while ((linea = reader.readLine()) != null) { // Lee línea por línea hasta llegar al final
                 if (!linea.trim().isEmpty()) {
                     Usuario u = Usuario.fromFileString(linea);
-                    if (u != null) {
+                    if (u != null) { // Revisa que el usuario se haya leído correctamente
                         lista.add(u);
                     }
                 }
@@ -65,8 +65,8 @@ public class GestorUsuarios {
             }
         }
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(RUTA_ARCHIVO, true))) {
-            writer.write(nuevoUsuario.toFileString());
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(RUTA_ARCHIVO, true))) { // Abre el archivo en modo agregar al final
+            writer.write(nuevoUsuario.toFileString()); // Escribe los datos del nuevo usuario en una línea
             writer.newLine();
             return true;
         } catch (IOException e) {
@@ -79,7 +79,7 @@ public class GestorUsuarios {
         List<Usuario> usuarios = cargarUsuarios();
         for (Usuario u : usuarios) {
             if ((u.getCorreo().equalsIgnoreCase(identificador) || u.getUsuario().equalsIgnoreCase(identificador))
-                    && u.getPassword().equals(password)) {
+                    && u.getPassword().equals(password)) { //Revisa si coincide el correo o el usuario
                 usuarioSesionActual = u;
                 registrarLoginSesion(u);
                 return u;
@@ -88,7 +88,7 @@ public class GestorUsuarios {
         return null;
     }
 
-    // Alias de compatibilidad para que controladores antiguos llamen a iniciarSesion sin error
+    //Alias de compatibilidad para que controladores antiguos llamen a iniciarSesion sin error
     public static Usuario iniciarSesion(String identificador, String password) {
         return validarCredenciales(identificador, password);
     }
@@ -132,7 +132,7 @@ public class GestorUsuarios {
         }
     }
 
-    // 🔗 Sobrecarga de compatibilidad para actualizar por entero directo
+    // Sobrecarga de compatibilidad para actualizar por entero directo
     public static void actualizarPuntuacionUsuario(Usuario usuario, int nuevaPuntuacion) {
         if (usuario != null) {
             usuario.agregarPuntos(nuevaPuntuacion);

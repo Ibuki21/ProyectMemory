@@ -62,7 +62,7 @@ public class ControladorRegistro {
             return;
         }
 
-        if (!Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-zA-Z]{2,}$", correo)) {
+        if (!Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-zA-Z]{2,}$", correo)) { // Comprueba que el correo tenga un formato válido
             JOptionPane.showMessageDialog(vista, "El correo electrónico no tiene un formato válido.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }

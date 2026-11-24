@@ -29,7 +29,7 @@ public class ControladorModoPatron {
     private int segundosRestantesTotal = 120;
     private int segundosRestantesCasilla = 20;
 
-    private boolean tableroHabilitado = false;
+    private boolean tableroHabilitado = false; //Indica si el jugador ya puede hacer clic en las casillas
 
     private static final String RUTA_AUDIO_CLICK = "Recursos/Cancion/Botones/Presiona1.wav";
     private static final String RUTA_MUSICA_ACDC = "Recursos/Cancion/AC-DC.wav";
@@ -46,7 +46,7 @@ public class ControladorModoPatron {
         seleccionarJugadorParaPartida();
         initListeners();
 
-        vista.addWindowListener(new WindowAdapter() {
+        vista.addWindowListener(new WindowAdapter() { //Escucha eventos de la ventana principal del modo
             @Override
             public void windowClosing(WindowEvent e) {
                 detenerTimers();
@@ -72,7 +72,7 @@ public class ControladorModoPatron {
             jugadorActivo = GestorUsuarios.getUsuarioSesionActual();
         }
     }
-
+    // Arranca o reinicia una ronda del modo patrones
     public void iniciar() {
         if (modelo != null && vista != null) {
             modelo.reiniciarRonda();
@@ -88,8 +88,8 @@ public class ControladorModoPatron {
         JButton[][] botones = vista.getBotonesCasillas();
         for (int i = 0; i < botones.length; i++) {
             for (int j = 0; j < botones[i].length; j++) {
-                final int f = i;
-                final int c = j;
+                final int f = i; //Guarda la fila actual para usarla dentro del evento
+                final int c = j; //Guarda la columna actual para usarla dentro del evento[
                 if (botones[i][j] != null) {
                     botones[i][j].addActionListener(e -> {
                         if (!tableroHabilitado) return;
@@ -117,13 +117,13 @@ public class ControladorModoPatron {
         }
     }
 
-    private void reproducirPatron() {
+    private void reproducirPatron() { //Muestra paso a paso las casillas que el jugador debe memorizar
         if (vista == null || modelo == null) return;
 
         vista.quitarTodosLosResaltados();
         pasoActualMostrar = 0;
 
-        List<int[]> secuencia = modelo.getSecuencia();
+        List<int[]> secuencia = modelo.getSecuencia(); //Obtiene la secuencia de coordenadas a mostrar
 
         if (secuencia == null || secuencia.isEmpty()) {
             bloquearTablero(false);
@@ -131,15 +131,15 @@ public class ControladorModoPatron {
             return;
         }
 
-        final List<int[]> secuenciaFinal = secuencia;
+        final List<int[]> secuenciaFinal = secuencia; //Guarda la referencia final de la secuencia para el timer
         timerMostrarPatron = new Timer(800, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 vista.quitarTodosLosResaltados();
                 if (pasoActualMostrar < secuenciaFinal.size()) {
-                    int[] coordenada = secuenciaFinal.get(pasoActualMostrar);
+                    int[] coordenada = secuenciaFinal.get(pasoActualMostrar); //Obtiene la fila y columna del paso actual
                     if (coordenada != null && coordenada.length >= 2) {
-                        vista.resaltarCasilla(coordenada[0], coordenada[1]);
+                        vista.resaltarCasilla(coordenada[0], coordenada[1]); //Resalta la casilla correspondiente en pantalla
                         GestorMusica.reproducirEfecto(RUTA_AUDIO_CLICK);
                     }
                     pasoActualMostrar++;
@@ -153,7 +153,7 @@ public class ControladorModoPatron {
         });
         timerMostrarPatron.start();
     }
-
+    //Configura y arranca el tiempo total y el tiempo entre casillas
     private void iniciarTimersJuego() {
         segundosRestantesTotal = 120;
         segundosRestantesCasilla = 20;
@@ -182,11 +182,11 @@ public class ControladorModoPatron {
         });
         timerEntreCasillas.start();
     }
-
+    //Revisa si la casilla elegida por el jugador es la correcta
     private void verificarSeleccion(int f, int c) {
         if (modelo == null || vista == null) return;
 
-        boolean acierto = modelo.verificarPaso(f, c);
+        boolean acierto = modelo.verificarPaso(f, c); //Consulta al modelo si el clic coincide con el paso esperado
         if (acierto) {
             segundosRestantesCasilla = 20;
             if (modelo.esRondaCompletada()) {

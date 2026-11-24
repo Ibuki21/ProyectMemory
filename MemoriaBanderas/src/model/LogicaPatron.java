@@ -26,7 +26,7 @@ public class LogicaPatron {
         secuencia.clear();
         Random rand = new Random();
         for (int i = 0; i < cantidadCasillas; i++) {
-            int f = rand.nextInt(filas);
+            int f = rand.nextInt(filas); // Elige una fila al azar
             int c = rand.nextInt(columnas);
             secuencia.add(new int[]{f, c});
         }

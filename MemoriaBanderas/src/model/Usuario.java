@@ -5,65 +5,65 @@ import java.io.Serializable;
 public class Usuario implements Serializable { // Entidad que representa a un jugador registrado
     private static final long serialVersionUID = 1L; // Identificador de versión para serialización
 
-    private String nombre; // Nombre del usuario
-    private String apellidos; // Apellidos del usuario
-    private String correo; // Correo electrónico del usuario
-    private String usuario; // Nombre de usuario (login)
-    private String password; // Contraseña del usuario
-    private String fechaNacimiento; // Fecha de nacimiento
-    private File fotoPerfil; // Archivo asociado a la fotografía de perfil
-    private int puntuacionMaxima; // Funciona como el acumulador total de puntos
-    private int mejorIntentosParejas; // Menor cantidad de intentos lograda en el modo parejas
+    private String nombre;
+    private String apellidos;
+    private String correo;
+    private String usuario;
+    private String password;
+    private String fechaNacimiento;
+    private File fotoPerfil;
+    private int puntuacionMaxima;
+    private int mejorIntentosParejas;
 
     public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil) { // Constructor inicial para nuevos registros
-        this.nombre = nombre; // Asigna nombre
-        this.apellidos = apellidos; // Asigna apellidos
-        this.correo = correo; // Asigna correo
-        this.usuario = usuario; // Asigna nombre de usuario
-        this.password = password; // Asigna contraseña
-        this.fechaNacimiento = fechaNacimiento; // Asigna fecha de nacimiento
-        this.fotoPerfil = fotoPerfil; // Asigna archivo de foto
-        this.puntuacionMaxima = 0; // Inicializa puntos acumulados en 0
-        this.mejorIntentosParejas = 0; // Inicializa mejor marca de intentos en 0 (sin registro previo)
+        this.nombre = nombre;
+        this.apellidos = apellidos;
+        this.correo = correo;
+        this.usuario = usuario;
+        this.password = password;
+        this.fechaNacimiento = fechaNacimiento;
+        this.fotoPerfil = fotoPerfil;
+        this.puntuacionMaxima = 0;
+        this.mejorIntentosParejas = 0;
     }
 
     public Usuario(String nombre, String apellidos, String correo, String usuario, String password, String fechaNacimiento, File fotoPerfil, int puntuacionMaxima, int mejorIntentosParejas) { // Constructor completo usado al cargar desde archivo
-        this.nombre = nombre; // Asigna nombre
-        this.apellidos = apellidos; // Asigna apellidos
-        this.correo = correo; // Asigna correo
-        this.usuario = usuario; // Asigna nombre de usuario
-        this.password = password; // Asigna contraseña
-        this.fechaNacimiento = fechaNacimiento; // Asigna fecha de nacimiento
-        this.fotoPerfil = fotoPerfil; // Asigna archivo de foto
-        this.puntuacionMaxima = puntuacionMaxima; // Restaura puntaje acumulado
-        this.mejorIntentosParejas = mejorIntentosParejas; // Restaura mejor cantidad de intentos
+        this.nombre = nombre;
+        this.apellidos = apellidos;
+        this.correo = correo;
+        this.usuario = usuario;
+        this.password = password;
+        this.fechaNacimiento = fechaNacimiento;
+        this.fotoPerfil = fotoPerfil;
+        this.puntuacionMaxima = puntuacionMaxima;
+        this.mejorIntentosParejas = mejorIntentosParejas;
     }
 
     // --- Getters y Setters ---
 
-    public String getNombre() { return nombre; } // Obtiene el nombre
-    public void setNombre(String nombre) { this.nombre = nombre; } // Modifica el nombre
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public String getApellidos() { return apellidos; } // Obtiene los apellidos
-    public void setApellidos(String apellidos) { this.apellidos = apellidos; } // Modifica los apellidos
+    public String getApellidos() { return apellidos; }
+    public void setApellidos(String apellidos) { this.apellidos = apellidos; }
 
-    public String getCorreo() { return correo; } // Obtiene el correo
-    public void setCorreo(String correo) { this.correo = correo; } // Modifica el correo
+    public String getCorreo() { return correo; }
+    public void setCorreo(String correo) { this.correo = correo; }
 
     public String getUsuario() { return usuario; } // Obtiene el nombre de usuario
-    public void setUsuario(String usuario) { this.usuario = usuario; } // Modifica el nombre de usuario
+    public void setUsuario(String usuario) { this.usuario = usuario; }
 
-    public String getPassword() { return password; } // Obtiene la contraseña
-    public void setPassword(String password) { this.password = password; } // Modifica la contraseña
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public String getFechaNacimiento() { return fechaNacimiento; } // Obtiene la fecha de nacimiento
-    public void setFechaNacimiento(String fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; } // Modifica la fecha de nacimiento
+    public String getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(String fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
 
-    public File getFotoPerfil() { return fotoPerfil; } // Obtiene el archivo de foto de perfil
-    public void setFotoPerfil(File fotoPerfil) { this.fotoPerfil = fotoPerfil; } // Modifica la foto de perfil
+    public File getFotoPerfil() { return fotoPerfil; }
+    public void setFotoPerfil(File fotoPerfil) { this.fotoPerfil = fotoPerfil; }
 
-    public int getPuntuacionMaxima() { return puntuacionMaxima; } // Obtiene los puntos acumulados
-    public void setPuntuacionMaxima(int puntuacion) { this.puntuacionMaxima = puntuacion; } // Establece directamente la puntuación
+    public int getPuntuacionMaxima() { return puntuacionMaxima; }
+    public void setPuntuacionMaxima(int puntuacion) { this.puntuacionMaxima = puntuacion; }
 
     // Acumula los puntos nuevos sumándolos de forma persistente al total
     public void agregarPuntos(int puntosNuevos) { // Suma puntos ganados al total del usuario
@@ -74,20 +74,20 @@ public class Usuario implements Serializable { // Entidad que representa a un ju
 
     // Alias para compatibilidad con la tabla del menú principal
     public int getPuntos() { // Devuelve el puntaje total bajo el nombre getPuntos
-        return this.puntuacionMaxima; // Retorna puntuacionMaxima
+        return this.puntuacionMaxima;
     }
 
     public int getMejorIntentosParejas() { return mejorIntentosParejas; } // Devuelve el menor número de intentos en parejas
 
     public boolean registrarIntentosParejas(int intentos) { // Evalúa si se logró una nueva mejor marca de intentos
-        if (intentos <= 0) { // Ignora valores inválidos menores o iguales a cero
-            return false; // No registra marca
+        if (intentos <= 0) {
+            return false;
         }
         if (mejorIntentosParejas == 0 || intentos < mejorIntentosParejas) { // Si no había marca previa o se usaron menos intentos
             mejorIntentosParejas = intentos; // Actualiza el récord de intentos
-            return true; // Indica que hubo mejora
+            return true;
         }
-        return false; // Indica que no superó la marca anterior
+        return false;
     }
 
     // --- Persistencia en Archivo de Texto ---
@@ -100,15 +100,15 @@ public class Usuario implements Serializable { // Entidad que representa a un ju
     public static Usuario fromFileString(String line) { // Reconstruye un Usuario a partir de una línea de texto
         String[] parts = line.split(","); // Divide la línea por comas
         if (parts.length >= 9) { // Verifica que existan todos los campos esperados
-            String nombre = parts[0].trim(); // Lee y limpia el nombre
-            String apellidos = parts[1].trim(); // Lee y limpia los apellidos
-            String correo = parts[2].trim(); // Lee y limpia el correo
-            String usuario = parts[3].trim(); // Lee y limpia el usuario
-            String password = parts[4].trim(); // Lee y limpia la contraseña
-            String fechaNacimiento = parts[5].trim(); // Lee y limpia la fecha de nacimiento
+            String nombre = parts[0].trim();
+            String apellidos = parts[1].trim();
+            String correo = parts[2].trim();
+            String usuario = parts[3].trim();
+            String password = parts[4].trim();
+            String fechaNacimiento = parts[5].trim(); 
 
             String rutaFoto = parts[6].trim(); // Lee la ruta de la foto
-            File foto = (rutaFoto.equals("null") || rutaFoto.isEmpty()) ? null : new File(rutaFoto); // Crea el File si hay ruta válida
+            File foto = (rutaFoto.equals("null") || rutaFoto.isEmpty()) ? null : new File(rutaFoto);
 
             int puntuacion = 0; // Valor por defecto para puntuación
             try {

@@ -222,8 +222,8 @@ public class ControladorJuegoParejas { // Coordina la vista, los dos modelos de 
         String nombreTablero = (jugador == 1) ? "Tablero 1 (Jugador 1)" : "Tablero 2 (Jugador 2)";
 
         int respuesta = JOptionPane.showConfirmDialog(vista, // Pide confirmación para guardar el puntaje
-                nombreTablero + " ha completado el juego con " + intentos + " intentos.\n¿Desea registrar este puntaje?",
-                "Registrar puntaje - " + nombreTablero, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                nombreTablero + " ha completado el juego con " + intentos + " intentos.\n¿Desea registrar este premio en colones?",
+                "Registrar colones - " + nombreTablero, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (respuesta != JOptionPane.YES_OPTION) { // Si el usuario responde que no
             return; // No guarda nada y regresa
@@ -243,7 +243,7 @@ public class ControladorJuegoParejas { // Coordina la vista, los dos modelos de 
 
         if (destino == null) {
             JOptionPane.showMessageDialog(vista, "No se encontró el perfil correspondiente para registrar el puntaje de este tablero.",
-                    "Puntaje no registrado", JOptionPane.INFORMATION_MESSAGE);
+                    "Dinero no registrado", JOptionPane.INFORMATION_MESSAGE);
             return; // Sale sin guardar
         }
 
@@ -251,23 +251,23 @@ public class ControladorJuegoParejas { // Coordina la vista, los dos modelos de 
 
         // Cálculo de puntos basado en intentos usando la fórmula BCCR
         double premioColones = ServicioCambioDolar.calcularPremio(Math.max(intentos, 1));
-        int puntosGanados = (int) Math.round(premioColones); // Redondea a entero de puntos
-        if (puntosGanados <= 0) { // Si el cálculo resulta menor o igual a 0, aplica el mínimo calculado por intentos
-            puntosGanados = Math.max(10, 200 - (intentos * 2)); // Mínimo 10 puntos o 200 menos 2 por intento
+        int colonesGanados = (int) Math.round(premioColones); // Redondea a entero de puntos
+        if (colonesGanados <= 0) { // Si el cálculo resulta menor o igual a 0, aplica el mínimo calculado por intentos
+            colonesGanados = Math.max(10, 200 - (intentos * 2)); // Mínimo 10 puntos o 200 menos 2 por intento
         }
 
-        destino.agregarPuntos(puntosGanados); // Suma los puntos ganados al perfil del usuario
+        destino.agregarPuntos(colonesGanados); // Suma los puntos ganados al perfil del usuario
         GestorUsuarios.actualizarPuntuacionUsuario(destino);
 
-        String mensaje = "¡Puntaje registrado para " + destino.getUsuario() + " (" + nombreTablero + ")!\n" +
+        String mensaje = "¡Premio registrado para " + destino.getUsuario() + " (" + nombreTablero + ")!\n" +
                 "• Intentos realizados: " + intentos + "\n" +
-                "• Puntos sumados (BCCR): +" + puntosGanados;
+                "• Premio sumado (BCCR): +" + colonesGanados;
 
         if (!mejoro) {
             mensaje += "\n(Su mejor marca histórica en este modo sigue siendo: " + destino.getMejorIntentosParejas() + " intentos)";
         }
 
-        JOptionPane.showMessageDialog(vista, mensaje, "Puntaje y Premio Registrado", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(vista, mensaje, "Premio Registrado", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void iniciarFaseMemoria() { // Configura y arranca los 5 segundos iniciales para memorizar las cartas

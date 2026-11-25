@@ -367,7 +367,7 @@ public class VentanaMenuPrincipal extends JFrame {
         panelLeaderboard.setOpaque(false);
         panelLeaderboard.setBorder(crearBordeLeaderboard(1.0));
 
-        String[] columnas = {"Pos.", "Usuario", "Puntos"};
+        String[] columnas = {"Pos.", "Usuario", "Colones"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -512,6 +512,7 @@ public class VentanaMenuPrincipal extends JFrame {
             modeloTabla.addRow(new Object[]{
                     posicion++,
                     u.getUsuario(),
+                    "₡" +
                     u.getPuntuacionMaxima() // 📈 Muestra el total acumulado de puntos de cada cuenta leída del archivo
             });
         }

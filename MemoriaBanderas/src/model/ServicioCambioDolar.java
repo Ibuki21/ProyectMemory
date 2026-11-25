@@ -107,4 +107,7 @@ public class ServicioCambioDolar {
         double cambioDolar = obtenerCambioDolar();
         return (1.0 / puntaje) * 100.0 * cambioDolar;
     }
+    public static String formatearColones(double monto) {
+        return String.format("₡%.0f", monto);
+    }
 }

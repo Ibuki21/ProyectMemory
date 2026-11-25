@@ -243,8 +243,8 @@ public class ControladorModoPatron {
 
             JOptionPane.showMessageDialog(vista,
                     "¡Partida de Patrón finalizada para " + jugadorActivo.getUsuario() + "!\n" +
-                            "Puntos sumados a su cuenta: +" + puntosRedondeados,
-                    "Puntaje Registrado", JOptionPane.INFORMATION_MESSAGE);
+                            "Premio sumado a su cuenta: +" + puntosRedondeados,
+                    "Premio Registrado", JOptionPane.INFORMATION_MESSAGE);
         }
         if (vista != null) {
             vista.dispose();
